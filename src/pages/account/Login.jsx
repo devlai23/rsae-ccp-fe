@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+
+// Note: Ensure this path is correct for your specific template! 
+// If your hook is named differently, adjust this import.
+import { UserContext } from '@/common/contexts/UserContext';
 
 // --- STYLED COMPONENTS ---
 
 const PageWrapper = styled.div`
   background-color: #fffdfa;
-  min-height: calc(100vh - 100px); /* Accounts for the header height */
+  min-height: calc(100vh - 100px); 
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -26,7 +30,7 @@ const Title = styled.h1`
   color: #1a1a1a;
   
   span {
-    color: #E2B853; /* RSAE Gold */
+    color: #E2B853; 
   }
 `;
 
@@ -79,6 +83,8 @@ const ForgotPasswordLink = styled(Link)`
   }
 `;
 
+// --- RESTORED MISSING STYLED COMPONENTS ---
+
 const Input = styled.input`
   background-color: #fafafa;
   border: 1px solid #dfdfdf;
@@ -107,7 +113,7 @@ const Checkbox = styled.input`
   width: 20px;
   height: 20px;
   cursor: pointer;
-  accent-color: #E2B853; /* Makes the checkbox gold when checked */
+  accent-color: #E2B853; 
 `;
 
 const CheckboxLabel = styled.label`
@@ -117,18 +123,53 @@ const CheckboxLabel = styled.label`
   cursor: pointer;
 `;
 
+const ErrorMessage = styled.div`
+  color: #e01e48;
+  background-color: #ffe3e6;
+  border: 1px solid #ffdce0;
+  padding: 1rem;
+  border-radius: 15px;
+  text-align: center;
+  font-weight: 600;
+`;
+
 // --- COMPONENT LOGIC ---
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const navigate = useNavigate();
+  
+  // Adjusted to use useContext based on your previous files, 
+  // but if your template uses a custom hook, you can change this back to: const { login } = useUser();
+  const { login, googleAuth } = useContext(UserContext); 
+  
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e) => {
-    e.preventDefault(); // put firebase login stuff here
-    
-    console.log('Logging in with:', email, password);
-    navigate('/dashboard'); 
+  // We are using the new unified formState
+  const [formState, setFormState] = useState({
+    email: '',
+    password: '',
+  });
+
+  const handleChange = (e) => {
+    setFormState({ ...formState, [e.target.name]: e.target.value });
+    setError(''); // Clears the error if the user starts typing again
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+      await login(formState.email, formState.password);
+      // Changed to route to /dashboard instead of / since this is the Admin login
+      navigate('/dashboard', { replace: true }); 
+    } catch (error) {
+      setError(error.message || 'Failed to login. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -138,15 +179,20 @@ export default function Login() {
         <Subtitle>Secure Login Portal For Dashboard Admin</Subtitle>
       </HeaderText>
 
-      <LoginCard onSubmit={handleLogin}>
+      {/* Connected to the correct handleSubmit function */}
+      <LoginCard onSubmit={handleSubmit}>
         
+        {/* Added error display */}
+        {error && <ErrorMessage>⚠️ {error}</ErrorMessage>}
+
         <FormGroup>
           <Label>Username / Email:</Label>
           <Input 
             type="email" 
+            name="email" // Required for handleChange to work
             placeholder="@rsae-community.org" 
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={formState.email}
+            onChange={handleChange}
             required
           />
         </FormGroup>
@@ -160,9 +206,10 @@ export default function Login() {
           </LabelRow>
           <Input 
             type="password" 
+            name="password" // Required for handleChange to work
             placeholder="••••••••••••" 
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={formState.password}
+            onChange={handleChange}
             required
           />
         </FormGroup>
@@ -174,8 +221,9 @@ export default function Login() {
 
         <button 
           type="submit" 
+          disabled={isLoading}
           style={{ 
-            backgroundColor: '#E2B853', 
+            backgroundColor: isLoading ? '#e6d398' : '#E2B853', 
             color: 'black', 
             padding: '1.2rem', 
             fontSize: '1.2rem', 
@@ -183,10 +231,13 @@ export default function Login() {
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            gap: '10px'
+            gap: '10px',
+            cursor: isLoading ? 'not-allowed' : 'pointer',
+            border: 'none',
+            borderRadius: '15px'
           }}
         >
-          <span>🔒</span> Secure Login
+          <span>🔒</span> {isLoading ? 'Logging In...' : 'Secure Login'}
         </button>
 
       </LoginCard>
