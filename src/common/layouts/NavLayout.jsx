@@ -10,7 +10,7 @@ export default function NavLayout() {
   const allowDevAdminHeader =
     import.meta.env.VITE_DASHBOARD_DEV_BYPASS === 'true';
 
-  const adminHeaderPaths = ['/dashboard', '/audit-log'];
+  const adminHeaderPaths = ['/dashboard', '/audit-log', '/browse'];
   const isAdmin = context?.user?.role === 'admin';
   const isAdminForHeader = isAdmin || allowDevAdminHeader;
   const shouldShowAdminHeader =
