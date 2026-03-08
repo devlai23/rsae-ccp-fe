@@ -1,26 +1,28 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import styled from 'styled-components';
 
 import { auth } from '@/firebase-config';
 
-const PAGE_SIZE = 4;
+const DASHBOARD_DEV_BYPASS =
+  import.meta.env.VITE_DASHBOARD_DEV_BYPASS === 'true';
 
 const PageContainer = styled.div`
   background-color: #f8f8f6;
   min-height: calc(100vh - 100px);
   padding: 3rem 4rem;
 
-  @media (max-width: 768px) {
-    padding: 1.5rem;
+  @media (max-width: 1024px) {
+    padding: 2rem 1.5rem;
   }
 `;
 
-const Header = styled.h1`
+const Title = styled.h1`
   margin: 0 0 2rem;
-  color: #101010;
-  font-size: 3rem;
+  color: #141414;
+  font-size: 3.6rem;
   font-weight: 800;
+  letter-spacing: -0.02em;
 
   @media (max-width: 768px) {
     font-size: 2.1rem;
@@ -31,24 +33,20 @@ const StatsRow = styled.section`
   margin-bottom: 2rem;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.8rem;
+  gap: 1.5rem;
 
   @media (max-width: 1200px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
 `;
 
 const Card = styled.article`
-  min-height: 150px;
-  border: 1px solid #e0e0e0;
-  border-radius: 22px;
-  background: #fff;
+  min-height: 160px;
+  border: 1px solid #dddddd;
+  border-radius: 20px;
+  background-color: #ffffff;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
-  padding: 1.8rem;
+  padding: 1.7rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -63,23 +61,23 @@ const CardHeader = styled.div`
 
 const CardTitle = styled.h2`
   margin: 0;
-  font-size: 2rem;
+  font-size: 1.1rem;
   font-weight: 700;
-  color: #141414;
+  color: #111111;
 `;
 
 const PendingBadge = styled.span`
-  border: 1px solid #ffd5da;
+  border: 1px solid #ffd8dd;
   border-radius: 999px;
-  background-color: #ffe6ea;
-  color: #e23256;
-  padding: 0.3rem 0.85rem;
-  font-size: 0.95rem;
+  background-color: #ffe8eb;
+  color: #e33657;
+  padding: 0.25rem 0.8rem;
+  font-size: 0.9rem;
   font-weight: 700;
   white-space: nowrap;
 `;
 
-const CardValueRow = styled.div`
+const ValueRow = styled.div`
   display: flex;
   align-items: baseline;
   gap: 0.75rem;
@@ -87,20 +85,20 @@ const CardValueRow = styled.div`
 
 const MainNumber = styled.span`
   color: #c79a00;
-  font-size: 2.9rem;
+  font-size: 2.2rem;
   line-height: 1;
   font-weight: 800;
 `;
 
 const SubText = styled.span`
-  color: #6d6d6d;
-  font-size: 1.7rem;
+  color: #676767;
+  font-size: 1rem;
 `;
 
 const BottomGrid = styled.section`
   display: grid;
-  grid-template-columns: minmax(300px, 1fr) minmax(480px, 2fr);
-  gap: 1.8rem;
+  grid-template-columns: minmax(300px, 1fr) minmax(500px, 2.1fr);
+  gap: 1.5rem;
 
   @media (max-width: 1200px) {
     grid-template-columns: 1fr;
@@ -108,17 +106,17 @@ const BottomGrid = styled.section`
 `;
 
 const Panel = styled.section`
-  border: 1px solid #dfdfdf;
-  border-radius: 22px;
-  background: #fff;
+  border: 1px solid #dddddd;
+  border-radius: 20px;
+  background-color: #ffffff;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
-  padding: 2rem;
+  padding: 2rem 1.6rem;
 `;
 
-const SectionTitle = styled.h3`
+const DistPanelTitle = styled.h3`
   margin: 0;
-  color: #171717;
-  font-size: 2.3rem;
+  color: #141414;
+  font-size: 2rem;
   font-weight: 800;
 `;
 
@@ -136,14 +134,14 @@ const DistItem = styled.div`
 `;
 
 const DistName = styled.span`
-  color: #5a6c88;
-  font-size: 1.5rem;
+  color: #637594;
+  font-size: 1rem;
 `;
 
 const DistValue = styled.span`
-  color: #151515;
+  color: #222222;
+  font-size: 1.05rem;
   font-weight: 700;
-  font-size: 1.45rem;
 `;
 
 const Track = styled.div`
@@ -151,395 +149,283 @@ const Track = styled.div`
   width: 100%;
   height: 10px;
   border-radius: 999px;
-  background: #f0f0f2;
+  background-color: #f0f0f2;
   overflow: hidden;
 `;
 
 const Fill = styled.div`
   width: ${(props) => props.$percentage}%;
   height: 100%;
-  border-radius: inherit;
-  background: ${(props) => props.$color};
+  background-color: ${(props) => props.$color};
 `;
 
 const ProposalsPanel = styled(Panel)`
-  min-height: 420px;
+  min-height: 370px;
   display: flex;
   flex-direction: column;
 `;
 
-const ProposalList = styled.div`
-  margin-top: 1.2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  flex: 1;
-`;
-
-const ProposalCard = styled.article`
-  border: 1px solid #e4e4e4;
-  border-left: 8px solid #f4ca25;
-  border-radius: 14px;
-  background: #fff;
-  padding: 1rem 1.1rem;
-`;
-
-const ProposalHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: flex-start;
-`;
-
-const ProposalTitle = styled.h4`
+const ProposalsHeading = styled.h3`
   margin: 0;
-  font-size: 1.1rem;
-  color: #151515;
-`;
-
-const ProposalMeta = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-top: 0.5rem;
-  font-size: 0.84rem;
-  color: #6f6f6f;
-`;
-
-const CategoryChip = styled.span`
-  border-radius: 999px;
-  background: #ffe8d1;
-  color: #95580f;
-  font-size: 0.78rem;
-  font-weight: 700;
-  padding: 0.2rem 0.55rem;
-`;
-
-const VoteText = styled.span`
-  color: #525252;
-  font-size: 0.86rem;
+  color: #141414;
+  font-size: 1.25rem;
   font-weight: 700;
 `;
 
-const ProposalDescription = styled.p`
-  margin: 0.8rem 0 0;
-  font-size: 0.9rem;
-  color: #2f2f2f;
-  line-height: 1.45;
-`;
-
-const PaginationRow = styled.div`
+const TableWrap = styled.div`
   margin-top: 1rem;
-  border-top: 1px solid #ececec;
-  padding-top: 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.75rem;
-`;
-
-const PaginationInfo = styled.span`
-  color: #656565;
-  font-size: 0.9rem;
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  gap: 0.5rem;
-`;
-
-const PageButton = styled.button`
-  border: 1px solid #d4d4d4;
-  border-radius: 10px;
-  background: ${(props) => (props.disabled ? '#f2f2f2' : '#ffffff')};
-  color: ${(props) => (props.disabled ? '#a4a4a4' : '#1d1d1d')};
-  padding: 0.45rem 0.85rem;
-  cursor: ${(props) => (props.disabled ? 'not-allowed' : 'pointer')};
-  font-size: 0.88rem;
-  font-weight: 600;
-`;
-
-const StatusBox = styled.div`
-  border: 1px dashed #d7d7d7;
+  max-height: 300px;
+  overflow: auto;
+  border: 1px solid #ececec;
   border-radius: 12px;
-  background: #fbfbfb;
-  color: ${(props) => (props.$error ? '#c03f3f' : '#6f6f6f')};
-  min-height: 110px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 1rem;
-  text-align: center;
 `;
 
-const formatCardValue = (value) => {
-  if (value >= 1000 && value % 1000 === 0) {
-    return `${value / 1000}K`;
+const ProposalsTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.83rem;
+
+  th,
+  td {
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid #f1f1f1;
+    padding: 0.55rem;
   }
 
-  return value.toLocaleString();
-};
+  th {
+    background-color: #fafafa;
+    color: #444;
+    font-weight: 700;
+    position: sticky;
+    top: 0;
+  }
 
-const formatDate = (isoString) =>
-  new Date(isoString).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+`;
 
-const getFillColor = (index) => {
-  const colors = ['#f4ca25', '#e3c45f', '#decf95', '#ddd6b1', '#e3dfc8'];
-  return colors[index % colors.length];
-};
+const StateText = styled.div`
+  margin-top: 1rem;
+  color: ${(props) => (props.$error ? '#c83f3f' : '#777')};
+  font-size: 0.9rem;
+`;
+
+const EmptyState = styled.div`
+  margin-top: 1rem;
+  border: 1px dashed #d6d6d6;
+  border-radius: 12px;
+  background-color: #fbfbfb;
+  padding: 1.2rem;
+  color: #666;
+  font-size: 0.92rem;
+  line-height: 1.5;
+`;
+
+const colors = ['#f4ca25', '#e3c45f', '#dbc98e', '#ded7b5', '#ded7b5'];
 
 const buildDashboardUrl = (endpoint) => {
-  const backendBaseUrl = import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '');
-  if (!backendBaseUrl) {
-    throw new Error('Missing VITE_BACKEND_URL in frontend environment config.');
+  const base = import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '');
+  if (!base) {
+    throw new Error('Missing VITE_BACKEND_URL in frontend env.');
   }
-
-  return `${backendBaseUrl}${endpoint}`;
+  return `${base}${endpoint}`;
 };
 
 async function fetchDashboardJson(endpoint) {
-  const token = await auth.currentUser?.getIdToken();
-  if (!token) {
-    throw new Error('You must be logged in as admin to view dashboard data.');
+  const token = await auth.currentUser?.getIdToken?.();
+  if (!token && !DASHBOARD_DEV_BYPASS) {
+    throw new Error('Admin login required.');
+  }
+
+  const headers = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
   }
 
   const response = await fetch(buildDashboardUrl(endpoint), {
     credentials: 'include',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers,
   });
 
   if (!response.ok) {
     const errorBody = await response.json().catch(() => null);
-    throw new Error(errorBody?.error || `Request failed with status ${response.status}`);
+    throw new Error(
+      errorBody?.error || `Request failed (${response.status})`
+    );
   }
 
   return response.json();
 }
 
-function StatCard({ card }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{card.title}</CardTitle>
-        {card.pendingCount > 0 && (
-          <PendingBadge>{card.pendingCount} pending</PendingBadge>
-        )}
-      </CardHeader>
-      <CardValueRow>
-        <MainNumber>{formatCardValue(card.value)}</MainNumber>
-        <SubText>{card.timeframe}</SubText>
-      </CardValueRow>
-    </Card>
-  );
-}
+const formatDate = (value) => {
+  if (!value) {
+    return '';
+  }
 
-function DashboardProposalCard({ proposal }) {
-  return (
-    <ProposalCard>
-      <ProposalHeader>
-        <div>
-          <ProposalTitle>{proposal.title}</ProposalTitle>
-          <ProposalMeta>
-            <span>{proposal.submittedBy}</span>
-            <span>-</span>
-            <span>{formatDate(proposal.submittedAt)}</span>
-          </ProposalMeta>
-        </div>
-
-        <div>
-          <CategoryChip>{proposal.category}</CategoryChip>
-          <VoteText>{proposal.votes} votes</VoteText>
-        </div>
-      </ProposalHeader>
-
-      <ProposalDescription>{proposal.description}</ProposalDescription>
-    </ProposalCard>
-  );
-}
+  return new Date(value).toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+};
 
 export default function DataDashboard() {
   const [cards, setCards] = useState([]);
   const [categories, setCategories] = useState([]);
   const [proposals, setProposals] = useState([]);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: PAGE_SIZE,
-    totalItems: 0,
-    totalPages: 1,
-  });
-
-  const [page, setPage] = useState(1);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [isProposalLoading, setIsProposalLoading] = useState(false);
-  const [initialError, setInitialError] = useState('');
-  const [proposalError, setProposalError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [metricsError, setMetricsError] = useState('');
+  const [categoriesError, setCategoriesError] = useState('');
+  const [proposalsError, setProposalsError] = useState('');
 
   useEffect(() => {
-    const loadDashboard = async () => {
-      setIsInitialLoading(true);
-      setInitialError('');
+    const load = async () => {
+      setLoading(true);
+      setMetricsError('');
+      setCategoriesError('');
+      setProposalsError('');
 
-      try {
-        const [metricsData, categoriesData, proposalsData] = await Promise.all([
+      const [metricsResult, categoriesResult, proposalsResult] =
+        await Promise.allSettled([
           fetchDashboardJson('/dashboard/metrics'),
           fetchDashboardJson('/dashboard/categories'),
-          fetchDashboardJson(`/dashboard/proposals?page=1&limit=${PAGE_SIZE}`),
+          fetchDashboardJson('/proposals'),
         ]);
 
-        setCards(metricsData.cards || []);
-        setCategories(categoriesData.categories || []);
-        setProposals(proposalsData.items || []);
-        setPagination(
-          proposalsData.pagination || {
-            page: 1,
-            limit: PAGE_SIZE,
-            totalItems: 0,
-            totalPages: 1,
-          }
-        );
-        setPage(1);
-      } catch (error) {
-        setInitialError(error.message || 'Failed to load dashboard data.');
-      } finally {
-        setIsInitialLoading(false);
+      if (metricsResult.status === 'fulfilled') {
+        setCards(metricsResult.value.cards || []);
+      } else {
+        setMetricsError(metricsResult.reason?.message || 'Failed to load metrics.');
       }
+
+      if (categoriesResult.status === 'fulfilled') {
+        setCategories(categoriesResult.value.categories || []);
+      } else {
+        setCategoriesError(
+          categoriesResult.reason?.message || 'Failed to load category distribution.'
+        );
+      }
+
+      if (proposalsResult.status === 'fulfilled') {
+        setProposals(proposalsResult.value.items || []);
+      } else {
+        setProposalsError(
+          proposalsResult.reason?.message || 'Failed to load proposals from database.'
+        );
+      }
+
+      setLoading(false);
     };
 
-    loadDashboard();
+    load();
   }, []);
-
-  useEffect(() => {
-    if (isInitialLoading || page === 1) {
-      return;
-    }
-
-    const loadProposalsByPage = async () => {
-      setIsProposalLoading(true);
-      setProposalError('');
-
-      try {
-        const proposalsData = await fetchDashboardJson(
-          `/dashboard/proposals?page=${page}&limit=${PAGE_SIZE}`
-        );
-
-        setProposals(proposalsData.items || []);
-        setPagination(
-          proposalsData.pagination || {
-            page,
-            limit: PAGE_SIZE,
-            totalItems: 0,
-            totalPages: 1,
-          }
-        );
-      } catch (error) {
-        setProposalError(error.message || 'Failed to load proposals.');
-      } finally {
-        setIsProposalLoading(false);
-      }
-    };
-
-    loadProposalsByPage();
-  }, [isInitialLoading, page]);
-
-  const paginationLabel = useMemo(() => {
-    if (!pagination.totalItems) {
-      return 'No submissions yet';
-    }
-    return `Page ${pagination.page} of ${pagination.totalPages} | ${pagination.totalItems} total submissions`;
-  }, [pagination.page, pagination.totalItems, pagination.totalPages]);
 
   return (
     <PageContainer>
-      <Header>Dashboard Overview</Header>
+      <Title>Dashboard Overview</Title>
 
-      {isInitialLoading ? (
-        <StatusBox>Loading dashboard data...</StatusBox>
-      ) : initialError ? (
-        <StatusBox $error>{initialError}</StatusBox>
-      ) : (
-        <>
-          <StatsRow>
-            {cards.map((card) => (
-              <StatCard key={card.id} card={card} />
-            ))}
-          </StatsRow>
+      {loading ? <StateText>Loading dashboard data...</StateText> : null}
 
-          <BottomGrid>
-            <Panel>
-              <SectionTitle>Category Distribution</SectionTitle>
+      <StatsRow>
+        {!cards.length ? (
+          <Card>
+            <StateText $error={!!metricsError}>
+              {metricsError || 'No submission metrics available yet.'}
+            </StateText>
+          </Card>
+        ) : (
+          cards.map((card) => (
+            <Card key={card.id}>
+              <CardHeader>
+                <CardTitle>{card.title}</CardTitle>
+                {card.pendingCount > 0 ? (
+                  <PendingBadge>&middot; {card.pendingCount} pending</PendingBadge>
+                ) : null}
+              </CardHeader>
 
-              {!categories.length ? (
-                <StatusBox>No category distribution data available.</StatusBox>
-              ) : (
-                <DistList>
-                  {categories.map((category, index) => (
-                    <DistItem key={category.id}>
-                      <DistName>{category.name}</DistName>
-                      <DistValue>{category.percentage}%</DistValue>
-                      <Track>
-                        <Fill
-                          $percentage={category.percentage}
-                          $color={getFillColor(index)}
-                        />
-                      </Track>
-                    </DistItem>
+              <ValueRow>
+                <MainNumber>{Number(card.value || 0).toLocaleString()}</MainNumber>
+                <SubText>{card.timeframe}</SubText>
+              </ValueRow>
+            </Card>
+          ))
+        )}
+      </StatsRow>
+
+      <BottomGrid>
+        <Panel>
+          <DistPanelTitle>Category Distribution</DistPanelTitle>
+
+          {categoriesError ? (
+            <StateText $error>{categoriesError}</StateText>
+          ) : !categories.length ? (
+            <EmptyState>
+              No category data yet. Percentages will appear after proposals are submitted.
+            </EmptyState>
+          ) : (
+            <DistList>
+              {categories.map((category, index) => (
+                <DistItem key={category.id}>
+                  <DistName>{category.name}</DistName>
+                  <DistValue>{category.percentage}%</DistValue>
+                  <Track>
+                    <Fill
+                      $percentage={category.percentage}
+                      $color={colors[index % colors.length]}
+                    />
+                  </Track>
+                </DistItem>
+              ))}
+            </DistList>
+          )}
+        </Panel>
+
+        <ProposalsPanel>
+          <ProposalsHeading>All Proposal Information</ProposalsHeading>
+
+          {proposalsError ? (
+            <StateText $error>{proposalsError}</StateText>
+          ) : proposals.length === 0 ? (
+            <EmptyState>
+              No proposals have been submitted yet. Once residents submit
+              proposals, all proposal details will appear here automatically.
+            </EmptyState>
+          ) : (
+            <TableWrap>
+              <ProposalsTable>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Votes</th>
+                    <th>Submitted By</th>
+                    <th>Submitted At</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {proposals.map((proposal) => (
+                    <tr key={proposal.id}>
+                      <td>{proposal.id}</td>
+                      <td>{proposal.title}</td>
+                      <td>{proposal.category}</td>
+                      <td>{proposal.description}</td>
+                      <td>{proposal.votes}</td>
+                      <td>{proposal.submittedBy}</td>
+                      <td>{formatDate(proposal.submittedAt)}</td>
+                      <td>{proposal.status}</td>
+                    </tr>
                   ))}
-                </DistList>
-              )}
-            </Panel>
-
-            <ProposalsPanel>
-              <SectionTitle>Resident Submissions</SectionTitle>
-
-              <ProposalList>
-                {isProposalLoading ? (
-                  <StatusBox>Loading proposals...</StatusBox>
-                ) : proposalError ? (
-                  <StatusBox $error>{proposalError}</StatusBox>
-                ) : !proposals.length ? (
-                  <StatusBox>No submissions available.</StatusBox>
-                ) : (
-                  proposals.map((proposal) => (
-                    <DashboardProposalCard key={proposal.id} proposal={proposal} />
-                  ))
-                )}
-              </ProposalList>
-
-              <PaginationRow>
-                <PaginationInfo>{paginationLabel}</PaginationInfo>
-                <ButtonGroup>
-                  <PageButton
-                    disabled={isProposalLoading || pagination.page <= 1}
-                    onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-                    type="button"
-                  >
-                    Previous
-                  </PageButton>
-                  <PageButton
-                    disabled={
-                      isProposalLoading ||
-                      pagination.page >= pagination.totalPages ||
-                      pagination.totalPages === 0
-                    }
-                    onClick={() =>
-                      setPage((prev) => Math.min(prev + 1, pagination.totalPages))
-                    }
-                    type="button"
-                  >
-                    Next
-                  </PageButton>
-                </ButtonGroup>
-              </PaginationRow>
-            </ProposalsPanel>
-          </BottomGrid>
-        </>
-      )}
+                </tbody>
+              </ProposalsTable>
+            </TableWrap>
+          )}
+        </ProposalsPanel>
+      </BottomGrid>
     </PageContainer>
   );
 }

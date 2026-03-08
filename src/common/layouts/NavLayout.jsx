@@ -7,11 +7,14 @@ import AdminHeader from '@/common/components/navigation/AdminHeader';
 export default function NavLayout() {
   const context = useContext(UserContext);
   const location = useLocation();
+  const allowDevAdminHeader =
+    import.meta.env.VITE_DASHBOARD_DEV_BYPASS === 'true';
 
-  const isAdmin = context?.user?.role === 'admin';
   const adminHeaderPaths = ['/dashboard', '/audit-log'];
+  const isAdmin = context?.user?.role === 'admin';
+  const isAdminForHeader = isAdmin || allowDevAdminHeader;
   const shouldShowAdminHeader =
-    isAdmin &&
+    isAdminForHeader &&
     adminHeaderPaths.some(
       (path) =>
         location.pathname === path || location.pathname.startsWith(`${path}/`)
