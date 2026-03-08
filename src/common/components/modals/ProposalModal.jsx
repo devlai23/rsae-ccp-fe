@@ -1,7 +1,4 @@
-import React from 'react';
 import styled from 'styled-components';
-
-// --- STYLED COMPONENTS ---
 
 const Overlay = styled.div`
   position: fixed;
@@ -9,182 +6,148 @@ const Overlay = styled.div`
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.4); /* Darkens the background */
+  background-color: rgba(0, 0, 0, 0.4);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000; /* Ensures it sits on top of the navbar */
+  z-index: 1000;
 `;
 
 const ModalContent = styled.div`
   background-color: #ffffff;
   border-radius: 24px;
-  width: 90%;
-  max-width: 860px;
-  max-height: 85vh; /* Prevents it from being taller than the screen */
-  overflow-y: auto; /* Adds a scrollbar if the content is too long */
-  padding: 3rem;
+  width: 92%;
+  max-width: 900px;
+  max-height: 86vh;
+  overflow-y: auto;
+  padding: 2rem;
   position: relative;
-  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 `;
 
 const CloseButton = styled.button`
   position: absolute;
-  top: 1.5rem;
-  right: 2rem;
-  background: none;
+  top: 1rem;
+  right: 1.3rem;
   border: none;
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #a0a0a0;
+  background: none;
+  font-size: 1.4rem;
+  color: #8f8f8f;
   cursor: pointer;
-  
-  &:hover {
-    color: #1a1a1a;
-  }
-`;
-
-const HeaderGroup = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 2rem;
 `;
 
 const Title = styled.h2`
-  font-size: 1.8rem;
-  font-weight: 800;
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.35rem;
+  font-size: 1.75rem;
 `;
 
-const MetaText = styled.span`
-  font-size: 1.1rem;
-  font-weight: 500;
-  color: #7f7f7f;
-`;
-
-const StatBlock = styled.div`
+const Meta = styled.div`
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-bottom: 1.2rem;
+  color: #666;
+  font-size: 0.9rem;
 `;
 
-const MainProposalBox = styled.div`
-  background-color: #fafafa;
-  border: 1.5px solid #dfdfdf;
-  border-radius: 16px;
-  padding: 2rem;
-  font-size: 1.1rem;
-  line-height: 1.8;
-  color: #1a1a1a;
-  margin-bottom: 3rem;
+const InfoBadge = styled.span`
+  border: 1px solid #e4e4e4;
+  border-radius: 999px;
+  background: #f9f9f9;
+  padding: 0.2rem 0.6rem;
 `;
 
-const CommentsSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+const DetailBox = styled.div`
+  border: 1px solid #e4e4e4;
+  border-radius: 14px;
+  background: #fafafa;
+  padding: 1rem;
+  margin-top: 0.8rem;
 `;
 
 const SectionTitle = styled.h3`
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin: 0 0 1rem 0;
-`;
-
-const CommentCard = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid #e7e7e7;
-`;
-
-const CommentUser = styled.div`
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
-const CommentText = styled.p`
   margin: 0;
-  color: #333;
-  line-height: 1.5;
+  font-size: 1.1rem;
 `;
 
-const LeaveThoughtInput = styled.input`
-  width: 100%;
-  padding: 1.2rem;
-  border-radius: 16px;
-  border: 1.5px solid #dfdfdf;
-  background-color: #fafafa;
-  font-size: 1rem;
+const Text = styled.p`
+  margin: 0.55rem 0 0;
+  line-height: 1.6;
+  color: #2e2e2e;
+`;
+
+const TagsWrap = styled.div`
+  margin-top: 0.6rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+`;
+
+const TagChip = styled.span`
+  border: 1px solid #d9d9d9;
+  border-radius: 999px;
+  background: #fff;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.78rem;
+  color: #555;
+`;
+
+const StateText = styled.div`
   margin-top: 1rem;
-  box-sizing: border-box;
-
-  &:focus {
-    outline: none;
-    border-color: #E2B853;
-  }
+  border: 1px dashed #d5d5d5;
+  border-radius: 12px;
+  background: #fbfbfb;
+  color: ${(props) => (props.$error ? '#cb3939' : '#696969')};
+  padding: 0.95rem;
 `;
 
-// --- COMPONENT LOGIC ---
+const formatDate = (value) =>
+  new Date(value).toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
 
-export default function ProposalModal({ proposalData, onClose }) {
-  if (!proposalData) return null;
-
+export default function ProposalModal({ proposalData, isLoading, error, onClose }) {
   return (
     <Overlay onClick={onClose}>
-      
-      <ModalContent onClick={(e) => e.stopPropagation()}>
-        <CloseButton onClick={onClose}>✕</CloseButton>
+      <ModalContent onClick={(event) => event.stopPropagation()}>
+        <CloseButton onClick={onClose}>x</CloseButton>
 
-        <HeaderGroup>
-          <div>
+        {isLoading ? <StateText>Loading proposal details...</StateText> : null}
+
+        {!isLoading && error ? <StateText $error>{error}</StateText> : null}
+
+        {!isLoading && !error && proposalData ? (
+          <>
             <Title>{proposalData.title}</Title>
-            <MetaText>User 123</MetaText>
-          </div>
-          <StatBlock>
-            <MetaText style={{ color: '#000', fontWeight: 'bold' }}>{proposalData.date}</MetaText>
-            <span style={{ color: '#E2B853', fontWeight: 'bold' }}>👍 {proposalData.votes} Votes</span>
-          </StatBlock>
-        </HeaderGroup>
+            <Meta>
+              <InfoBadge>Category: {proposalData.category}</InfoBadge>
+              <InfoBadge>Status: {proposalData.status}</InfoBadge>
+              <InfoBadge>Votes: {proposalData.votes}</InfoBadge>
+              <InfoBadge>Submitted By: {proposalData.submittedBy}</InfoBadge>
+              <InfoBadge>Submitted: {formatDate(proposalData.submittedAt)}</InfoBadge>
+            </Meta>
 
-        <MainProposalBox>
-          {proposalData.description}
-        </MainProposalBox>
+            <DetailBox>
+              <SectionTitle>Description</SectionTitle>
+              <Text>{proposalData.description}</Text>
+            </DetailBox>
 
-        <CommentsSection>
-          <SectionTitle>Comments</SectionTitle>
-          
-          <CommentCard> {/* would use actual data eventually i think */}
-            <div>
-              <CommentUser>👤 Anonymous Resident</CommentUser>
-              <CommentText>This is such a good idea!!</CommentText>
-            </div>
-            <StatBlock>
-              <MetaText style={{ fontSize: '0.9rem' }}>Mon Feb 16</MetaText>
-              <span style={{ color: '#E2B853', fontWeight: 'bold' }}>10 🤍</span>
-            </StatBlock>
-          </CommentCard>
-
-          <CommentCard>
-            <div>
-              <CommentUser>👤 Anonymous Resident</CommentUser>
-              <CommentText>I completely agree, this would help the neighborhood immensely.</CommentText>
-            </div>
-            <StatBlock>
-              <MetaText style={{ fontSize: '0.9rem' }}>Tue Feb 17</MetaText>
-              <span style={{ color: '#E2B853', fontWeight: 'bold' }}>4 🤍</span>
-            </StatBlock>
-          </CommentCard>
-
-          <LeaveThoughtInput type="text" placeholder="Leave your thoughts..." />
-        </CommentsSection>
-
+            <DetailBox>
+              <SectionTitle>Tags</SectionTitle>
+              {proposalData.tags?.length ? (
+                <TagsWrap>
+                  {proposalData.tags.map((tag) => (
+                    <TagChip key={tag}>{tag}</TagChip>
+                  ))}
+                </TagsWrap>
+              ) : (
+                <Text>No tags provided.</Text>
+              )}
+            </DetailBox>
+          </>
+        ) : null}
       </ModalContent>
     </Overlay>
   );

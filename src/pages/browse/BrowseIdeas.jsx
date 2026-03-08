@@ -1,157 +1,381 @@
-import React, { useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
+
 import styled from 'styled-components';
+
 import ProposalEntry from '@/common/components/cards/ProposalEntry';
-import ProposalModal from '@/common/components/modals/ProposalModal'; 
+import ProposalModal from '@/common/components/modals/ProposalModal';
+import { auth } from '@/firebase-config';
+import { UserContext } from '@/common/contexts/UserContext';
+
+const DASHBOARD_DEV_BYPASS =
+  import.meta.env.VITE_DASHBOARD_DEV_BYPASS === 'true';
 
 const PageContainer = styled.div`
   background-color: #f8f8f6;
   min-height: 100vh;
   padding: 3rem 4rem;
+
+  @media (max-width: 1024px) {
+    padding: 2rem 1.5rem;
+  }
 `;
 
 const PageHeader = styled.div`
+  margin-bottom: 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  gap: 1rem;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
 const Title = styled.h1`
-  font-size: 2.5rem;
-  font-weight: 800;
   margin: 0;
+  font-size: 2.6rem;
+  font-weight: 800;
 `;
 
 const SearchInput = styled.input`
-  padding: 0.8rem 1.5rem;
-  border-radius: 15px;
-  border: 1px solid #dfdfdf;
-  width: 300px;
-  font-size: 1rem;
+  width: 320px;
+  border: 1px solid #d8d8d8;
+  border-radius: 14px;
+  background-color: #fff;
+  padding: 0.8rem 1rem;
+  font-size: 0.96rem;
+
+  &:focus {
+    outline: none;
+    border-color: #e2b853;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 const LayoutGrid = styled.div`
   display: grid;
-  grid-template-columns: 300px 1fr; /* 300px sidebar, the rest for cards */
-  gap: 4rem;
-`;
+  grid-template-columns: 290px 1fr;
+  gap: 2rem;
 
-// --- SIDEBAR STYLES ---
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+`;
 
 const Sidebar = styled.aside`
-  background-color: #ffffff;
-  border: 1px solid #e0e0e0;
+  border: 1px solid #dddddd;
   border-radius: 20px;
-  padding: 2rem;
+  background-color: #fff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+  padding: 1.3rem;
   height: fit-content;
-  box-shadow: 0px 4px 12px rgba(0,0,0,0.03);
 `;
 
-const SidebarLabel = styled.h4`
-  font-size: 1.2rem;
-  margin: 0 0 1rem 0;
+const SectionLabel = styled.h4`
+  margin: 1rem 0 0.6rem;
+  color: #232323;
+  font-size: 1rem;
 `;
 
 const Dropdown = styled.select`
   width: 100%;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  border-radius: 15px;
   border: 1px solid #dfdfdf;
+  border-radius: 12px;
   background-color: #fafafa;
-  font-weight: 500;
+  padding: 0.7rem 0.75rem;
+  margin-bottom: 0.8rem;
 `;
 
-// --- DUMMY DATA ---
+const TagWrap = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+`;
 
-const dummyProposals = [
-  {
-    id: 1,
-    title: "Health Proposal",
-    category: "Health & Wellness",
-    date: "Mon Feb 14",
-    votes: 20,
-    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
-  },
-  {
-    id: 2,
-    title: "New Public Park",
-    category: "Economic Development",
-    date: "Wed Feb 16",
-    votes: 85,
-    description: "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident."
-  },
-  {
-    id: 3,
-    title: "After School Arts Program",
-    category: "Arts & Culture",
-    date: "Fri Feb 18",
-    votes: 12,
-    description: "Sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet."
+const TagChip = styled.button`
+  border: 1px solid ${(props) => (props.$active ? '#e2b853' : '#d8d8d8')};
+  border-radius: 999px;
+  background: ${(props) => (props.$active ? '#f8ebc3' : '#fff')};
+  color: #2d2d2d;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+`;
+
+const ResetButton = styled.button`
+  margin-top: 1rem;
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  background: #fff;
+  padding: 0.6rem;
+  font-weight: 600;
+  cursor: pointer;
+`;
+
+const FeedArea = styled.section``;
+
+const StateBox = styled.div`
+  border: 1px dashed #d6d6d6;
+  border-radius: 14px;
+  background: #fbfbfb;
+  color: ${(props) => (props.$error ? '#cb3a3a' : '#696969')};
+  padding: 1rem;
+`;
+
+const buildApiUrl = (path) => {
+  const base = import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '');
+  if (!base) {
+    throw new Error('Missing VITE_BACKEND_URL in frontend env.');
   }
-];
+  return `${base}${path}`;
+};
 
+const formatDate = (value) =>
+  new Date(value).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+async function fetchApi(path) {
+  const token = await auth.currentUser?.getIdToken?.();
+  const headers = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(buildApiUrl(path), {
+    credentials: 'include',
+    headers,
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.error || `Request failed (${response.status})`);
+  }
+
+  return response.json();
+}
+
+const buildQueryString = ({ search, category, status, sort, tag }) => {
+  const params = new URLSearchParams();
+
+  if (search.trim()) {
+    params.set('search', search.trim());
+  }
+  if (category !== 'all') {
+    params.set('category', category);
+  }
+  if (status !== 'all') {
+    params.set('status', status);
+  }
+  if (sort !== 'newest') {
+    params.set('sort', sort);
+  }
+  if (tag !== 'all') {
+    params.set('tag', tag);
+  }
+
+  const query = params.toString();
+  return query ? `?${query}` : '';
+};
 
 export default function BrowseIdeas() {
-  // controls modal visibility
+  const { user } = useContext(UserContext);
+  const isAdmin = user?.role === 'admin' || DASHBOARD_DEV_BYPASS;
+
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('all');
+  const [status, setStatus] = useState('all');
+  const [sort, setSort] = useState('newest');
+  const [activeTag, setActiveTag] = useState('all');
+
+  const [tags, setTags] = useState([]);
+  const [proposals, setProposals] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // tracks when proposal entry clicked
+  const [modalLoading, setModalLoading] = useState(false);
+  const [modalError, setModalError] = useState('');
   const [selectedProposal, setSelectedProposal] = useState(null);
 
-  const handleOpenModal = (proposal) => {
-    setSelectedProposal(proposal);
+  const queryString = useMemo(
+    () => buildQueryString({ search, category, status, sort, tag: activeTag }),
+    [search, category, status, sort, activeTag]
+  );
+
+  useEffect(() => {
+    const loadTags = async () => {
+      try {
+        const data = await fetchApi('/proposals/tags');
+        setTags(data.tags || []);
+      } catch {
+        setTags([]);
+      }
+    };
+
+    loadTags();
+  }, []);
+
+  useEffect(() => {
+    const loadProposals = async () => {
+      setIsLoading(true);
+      setError('');
+      try {
+        const data = await fetchApi(`/proposals${queryString}`);
+        setProposals(data.items || []);
+      } catch (loadError) {
+        setError(loadError.message || 'Failed to load proposals');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProposals();
+  }, [queryString]);
+
+  const resetFilters = () => {
+    setSearch('');
+    setCategory('all');
+    setStatus('all');
+    setSort('newest');
+    setActiveTag('all');
+  };
+
+  const openProposalDetails = async (proposalId) => {
     setIsModalOpen(true);
+    setModalLoading(true);
+    setModalError('');
+    setSelectedProposal(null);
+
+    try {
+      const proposal = await fetchApi(`/proposals/${proposalId}`);
+      setSelectedProposal(proposal);
+    } catch (detailError) {
+      setModalError(detailError.message || 'Failed to load proposal details');
+    } finally {
+      setModalLoading(false);
+    }
   };
 
   return (
     <PageContainer>
       <PageHeader>
-        <Title>Browse</Title>
-        <SearchInput type="text" placeholder="Search..." />
+        <Title>{isAdmin ? 'Idea Requests' : 'Browse Ideas'}</Title>
+        <SearchInput
+          type='text'
+          placeholder='Search title, description, or submitter...'
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+        />
       </PageHeader>
 
       <LayoutGrid>
-        {/* SIDEBAR */}
         <Sidebar>
-          <Dropdown>
-            <option>Filter By Category</option>
-            <option>Housing</option>
-            <option>Health & Wellness</option>
-          </Dropdown>
-          <Dropdown>
-            <option>Filter By Date</option>
-            <option>Newest First</option>
-            <option>Oldest First</option>
+          <SectionLabel>Category</SectionLabel>
+          <Dropdown
+            value={category}
+            onChange={(event) => setCategory(event.target.value)}
+          >
+            <option value='all'>All categories</option>
+            <option value='Housing'>Housing</option>
+            <option value='Health and Wellness'>Health & Wellness</option>
+            <option value='Economic development'>Economic development</option>
+            <option value='Art and culture'>Art and culture</option>
+            <option value='Education'>Education</option>
           </Dropdown>
 
-          <SidebarLabel style={{ marginTop: '2rem' }}>Tags</SidebarLabel>
-          <p style={{ color: '#7f7f7f', fontSize: '0.9rem' }}>Will implement later!!</p>
+          <SectionLabel>Date</SectionLabel>
+          <Dropdown value={sort} onChange={(event) => setSort(event.target.value)}>
+            <option value='newest'>Newest first</option>
+            <option value='oldest'>Oldest first</option>
+          </Dropdown>
+
+          {isAdmin ? (
+            <>
+              <SectionLabel>Status</SectionLabel>
+              <Dropdown
+                value={status}
+                onChange={(event) => setStatus(event.target.value)}
+              >
+                <option value='all'>All statuses</option>
+                <option value='pending'>Pending</option>
+                <option value='approved'>Approved</option>
+                <option value='rejected'>Rejected</option>
+              </Dropdown>
+            </>
+          ) : null}
+
+          <SectionLabel>Tags</SectionLabel>
+          <TagWrap>
+            <TagChip
+              type='button'
+              $active={activeTag === 'all'}
+              onClick={() => setActiveTag('all')}
+            >
+              All
+            </TagChip>
+            {tags.map((tag) => (
+              <TagChip
+                key={tag}
+                type='button'
+                $active={activeTag === tag}
+                onClick={() => setActiveTag(tag)}
+              >
+                {tag}
+              </TagChip>
+            ))}
+          </TagWrap>
+
+          <ResetButton type='button' onClick={resetFilters}>
+            Clear Filters
+          </ResetButton>
         </Sidebar>
 
-        {/* MAIN FEED */}
-        <div>
-          {dummyProposals.map((proposal) => (
-            <ProposalEntry 
-              key={proposal.id}
-              title={proposal.title}
-              category={proposal.category}
-              description={proposal.description}
-              date={proposal.date}
-              votes={proposal.votes}
-              // When "Comment" is clicked, pass THIS proposal data to the modal
-              onCommentClick={() => handleOpenModal(proposal)} 
-            />
-          ))}
-        </div>
+        <FeedArea>
+          {isLoading ? <StateBox>Loading proposals...</StateBox> : null}
+          {!isLoading && error ? <StateBox $error>{error}</StateBox> : null}
+
+          {!isLoading && !error && proposals.length === 0 ? (
+            <StateBox>No proposals match your current filters.</StateBox>
+          ) : null}
+
+          {!isLoading && !error
+            ? proposals.map((proposal) => (
+                <ProposalEntry
+                  key={proposal.id}
+                  title={proposal.title}
+                  category={proposal.category}
+                  description={proposal.description}
+                  date={formatDate(proposal.submittedAt)}
+                  votes={proposal.votes}
+                  onCommentClick={() => openProposalDetails(proposal.id)}
+                />
+              ))
+            : null}
+        </FeedArea>
       </LayoutGrid>
 
-    {isModalOpen && (
-        <ProposalModal 
-           proposalData={selectedProposal} 
-           onClose={() => setIsModalOpen(false)} 
+      {isModalOpen ? (
+        <ProposalModal
+          proposalData={selectedProposal}
+          isLoading={modalLoading}
+          error={modalError}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedProposal(null);
+            setModalError('');
+            setModalLoading(false);
+          }}
         />
-      )}
-
+      ) : null}
     </PageContainer>
   );
 }
