@@ -17,7 +17,25 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
+const dashboardDevBypass = import.meta.env.VITE_DASHBOARD_DEV_BYPASS === 'true';
+const hasRequiredFirebaseConfig =
+  !!firebaseConfig.apiKey &&
+  !!firebaseConfig.authDomain &&
+  !!firebaseConfig.projectId &&
+  !!firebaseConfig.appId;
+
+let app = null;
+let auth = { currentUser: null };
+let googleProvider = null;
+
+if (hasRequiredFirebaseConfig) {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  googleProvider = new GoogleAuthProvider();
+} else if (!dashboardDevBypass) {
+  console.warn(
+    'Firebase config missing in frontend .env. Auth flows are disabled until VITE_FIREBASE_* values are set.'
+  );
+}
+
+export { app, auth, googleProvider };

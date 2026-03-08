@@ -1,17 +1,28 @@
 import React, { useContext } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { UserContext } from '@/common/contexts/UserContext';
 import UserHeader from '@/common/components/navigation/UserHeader';
 import AdminHeader from '@/common/components/navigation/AdminHeader';
 
 export default function NavLayout() {
   const context = useContext(UserContext);
-  
-  const isAdmin = context?.user?.role === 'admin'; // changing which header shows based on wether admin or not
+  const location = useLocation();
+  const allowDevAdminHeader =
+    import.meta.env.VITE_DASHBOARD_DEV_BYPASS === 'true';
+
+  const adminHeaderPaths = ['/dashboard', '/audit-log', '/browse'];
+  const isAdmin = context?.user?.role === 'admin';
+  const isAdminForHeader = isAdmin || allowDevAdminHeader;
+  const shouldShowAdminHeader =
+    isAdminForHeader &&
+    adminHeaderPaths.some(
+      (path) =>
+        location.pathname === path || location.pathname.startsWith(`${path}/`)
+    );
 
   return (
     <>
-      {isAdmin ? <AdminHeader /> : <UserHeader />}
+      {shouldShowAdminHeader ? <AdminHeader /> : <UserHeader />}
       <main>
         <Outlet /> 
       </main>
