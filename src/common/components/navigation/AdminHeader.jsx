@@ -108,13 +108,19 @@ export default function AdminHeader() {
           <StyledLink to='/' $active={pathname === '/'}>
             Home
           </StyledLink>
-          <StyledLink to='/dashboard' $active={pathname.startsWith('/dashboard')}>
+          <StyledLink
+            to='/dashboard'
+            $active={pathname.startsWith('/dashboard')}
+          >
             Dashboard
           </StyledLink>
           <StyledLink to='/browse' $active={pathname.startsWith('/browse')}>
             Idea Requests
           </StyledLink>
-          <StyledLink to='/audit-log' $active={pathname.startsWith('/audit-log')}>
+          <StyledLink
+            to='/audit-log'
+            $active={pathname.startsWith('/audit-log')}
+          >
             Audit Log
           </StyledLink>
         </NavLinks>

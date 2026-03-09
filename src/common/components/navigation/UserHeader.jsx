@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+
+import rsaeLogo from '@/assets/rsae-logo.jpg';
 import styled from 'styled-components';
-import rsaeLogo from '@/assets/rsae-logo.jpg'; 
 
 // --- STYLED COMPONENTS ---
 
@@ -11,7 +12,7 @@ const HeaderContainer = styled.header`
   align-items: center;
   padding: 1.5rem 4rem;
   background-color: #ffffff;
-  border-bottom: 1px solid #eaeaea; 
+  border-bottom: 1px solid #eaeaea;
 `;
 
 const LogoContainer = styled(Link)`
@@ -36,9 +37,9 @@ const StyledLink = styled(Link)`
   text-decoration: none;
   color: #1a1a1a;
   font-weight: 500;
-  
+
   &:hover {
-    color: #E2B853; 
+    color: #e2b853;
   }
 `;
 
@@ -47,22 +48,24 @@ const StyledLink = styled(Link)`
 export default function UserHeader() {
   return (
     <HeaderContainer>
-      <LogoContainer to="/">
-        <LogoImage src={rsaeLogo} alt="Reparations Stakeholders Authority Evanston Logo" />
+      <LogoContainer to='/'>
+        <LogoImage
+          src={rsaeLogo}
+          alt='Reparations Stakeholders Authority Evanston Logo'
+        />
       </LogoContainer>
 
       <NavLinks>
-        <StyledLink to="/">Home</StyledLink>
-        <StyledLink to="/browse">Browse Ideas</StyledLink>
-        <StyledLink to="/login">Admin Log In</StyledLink>
-        
-        <Link to="/submit" style={{ textDecoration: 'none' }}>
+        <StyledLink to='/'>Home</StyledLink>
+        <StyledLink to='/browse'>Browse Ideas</StyledLink>
+        <StyledLink to='/login'>Admin Log In</StyledLink>
+
+        <Link to='/submit' style={{ textDecoration: 'none' }}>
           <button style={{ backgroundColor: '#E2B853', color: 'black' }}>
             Submit Proposal
           </button>
         </Link>
       </NavLinks>
-
     </HeaderContainer>
   );
 }

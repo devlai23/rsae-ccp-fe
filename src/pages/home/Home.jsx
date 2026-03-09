@@ -1,16 +1,20 @@
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
-import styled from 'styled-components';
-import { UserContext } from '@/common/contexts/UserContext';
 
 // 1. IMPORT YOUR COMPONENTS & ASSETS
-import heroBg from '@/assets/hero-bg.jpg'; 
-import HowItWorks from './HowItWorks'; // Importing the new file we just made!
+import heroBg from '@/assets/hero-bg.jpg';
+import { UserContext } from '@/common/contexts/UserContext';
+import styled from 'styled-components';
+
+import HowItWorks from './HowItWorks';
+
+// Importing the new file we just made!
 
 // --- HERO STYLED COMPONENTS ---
 
 const HeroContainer = styled.section`
-  background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${heroBg});
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${heroBg});
   background-size: cover;
   background-position: center;
   padding: 6rem 4rem;
@@ -22,7 +26,7 @@ const HeroContainer = styled.section`
 `;
 
 const TopSubtitle = styled.p`
-  color: #E2B853; 
+  color: #e2b853;
   font-weight: bold;
   margin-bottom: 1rem;
   font-size: 1.1rem;
@@ -35,9 +39,9 @@ const MainTitle = styled.h1`
   max-width: 800px;
   line-height: 1.2;
   margin: 0 0 1.5rem 0;
-  
+
   span {
-    color: #E2B853;
+    color: #e2b853;
     font-style: italic;
   }
 `;
@@ -56,14 +60,14 @@ const ButtonGroup = styled.div`
 `;
 
 const PrimaryButton = styled(Link)`
-  background-color: #E2B853;
+  background-color: #e2b853;
   color: #000000;
   padding: 0.8rem 1.5rem;
   border-radius: 4px;
   font-weight: bold;
   text-decoration: none;
-  border: 2px solid #E2B853;
-  
+  border: 2px solid #e2b853;
+
   &:hover {
     background-color: #d1a742;
   }
@@ -77,7 +81,7 @@ const SecondaryButton = styled(Link)`
   font-weight: bold;
   text-decoration: none;
   border: 2px solid #ffffff;
-  
+
   &:hover {
     background-color: rgba(255, 255, 255, 0.1);
   }
@@ -86,13 +90,13 @@ const SecondaryButton = styled(Link)`
 // --- STATS BAR STYLED COMPONENTS ---
 
 const StatsBar = styled.section`
-  background-color: #E2B853; 
+  background-color: #e2b853;
   color: #000000;
   padding: 2rem 4rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap; 
+  flex-wrap: wrap;
   gap: 2rem;
 `;
 
@@ -150,22 +154,22 @@ export default function Home() {
       {/* HERO SECTION */}
       <HeroContainer>
         <TopSubtitle>— For our local community, Evanston</TopSubtitle>
-        
+
         <MainTitle>
           A Transparent Process from Idea <br />
           <span>to Implementation</span>
         </MainTitle>
-        
+
         <Description>
-          A transparent platform for Evanston residents to submit ideas, browse and 
-          vote on community proposals, and see the most supported ideas brought 
-          to life.
+          A transparent platform for Evanston residents to submit ideas, browse
+          and vote on community proposals, and see the most supported ideas
+          brought to life.
         </Description>
 
         {!isAdmin && (
           <ButtonGroup>
-            <PrimaryButton to="/submit">Submit An Idea</PrimaryButton>
-            <SecondaryButton to="/browse">Browse Ideas</SecondaryButton>
+            <PrimaryButton to='/submit'>Submit An Idea</PrimaryButton>
+            <SecondaryButton to='/browse'>Browse Ideas</SecondaryButton>
           </ButtonGroup>
         )}
       </HeroContainer>
@@ -199,7 +203,6 @@ export default function Home() {
 
       {/* HOW IT WORKS SECTION */}
       <HowItWorks />
-
     </div>
   );
 }

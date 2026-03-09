@@ -108,7 +108,12 @@ const formatDate = (value) =>
     day: 'numeric',
   });
 
-export default function ProposalModal({ proposalData, isLoading, error, onClose }) {
+export default function ProposalModal({
+  proposalData,
+  isLoading,
+  error,
+  onClose,
+}) {
   return (
     <Overlay onClick={onClose}>
       <ModalContent onClick={(event) => event.stopPropagation()}>
@@ -126,7 +131,9 @@ export default function ProposalModal({ proposalData, isLoading, error, onClose 
               <InfoBadge>Status: {proposalData.status}</InfoBadge>
               <InfoBadge>Votes: {proposalData.votes}</InfoBadge>
               <InfoBadge>Submitted By: {proposalData.submittedBy}</InfoBadge>
-              <InfoBadge>Submitted: {formatDate(proposalData.submittedAt)}</InfoBadge>
+              <InfoBadge>
+                Submitted: {formatDate(proposalData.submittedAt)}
+              </InfoBadge>
             </Meta>
 
             <DetailBox>

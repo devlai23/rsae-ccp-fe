@@ -1,11 +1,10 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
 
-import styled from 'styled-components';
-
 import ProposalEntry from '@/common/components/cards/ProposalEntry';
 import ProposalModal from '@/common/components/modals/ProposalModal';
-import { auth } from '@/firebase-config';
 import { UserContext } from '@/common/contexts/UserContext';
+import { auth } from '@/firebase-config';
+import styled from 'styled-components';
 
 const DASHBOARD_DEV_BYPASS =
   import.meta.env.VITE_DASHBOARD_DEV_BYPASS === 'true';
@@ -293,7 +292,10 @@ export default function BrowseIdeas() {
           </Dropdown>
 
           <SectionLabel>Date</SectionLabel>
-          <Dropdown value={sort} onChange={(event) => setSort(event.target.value)}>
+          <Dropdown
+            value={sort}
+            onChange={(event) => setSort(event.target.value)}
+          >
             <option value='newest'>Newest first</option>
             <option value='oldest'>Oldest first</option>
           </Dropdown>

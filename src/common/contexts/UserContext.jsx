@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 
 import { auth, googleProvider } from '@/firebase-config';
 import {
@@ -9,6 +8,7 @@ import {
   signInWithPopup,
   signOut,
 } from 'firebase/auth';
+import PropTypes from 'prop-types';
 
 const dashboardDevBypass = import.meta.env.VITE_DASHBOARD_DEV_BYPASS === 'true';
 
@@ -133,7 +133,9 @@ export function UserProvider({ children }) {
     }
 
     if (!auth?.app || !googleProvider) {
-      throw new Error('Firebase Google auth is not configured in frontend .env');
+      throw new Error(
+        'Firebase Google auth is not configured in frontend .env'
+      );
     }
 
     try {

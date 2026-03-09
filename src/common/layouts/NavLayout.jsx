@@ -1,8 +1,9 @@
 import React, { useContext } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { UserContext } from '@/common/contexts/UserContext';
-import UserHeader from '@/common/components/navigation/UserHeader';
+
 import AdminHeader from '@/common/components/navigation/AdminHeader';
+import UserHeader from '@/common/components/navigation/UserHeader';
+import { UserContext } from '@/common/contexts/UserContext';
 
 export default function NavLayout() {
   const context = useContext(UserContext);
@@ -24,7 +25,7 @@ export default function NavLayout() {
     <>
       {shouldShowAdminHeader ? <AdminHeader /> : <UserHeader />}
       <main>
-        <Outlet /> 
+        <Outlet />
       </main>
     </>
   );

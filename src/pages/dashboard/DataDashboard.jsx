@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 
-import styled from 'styled-components';
-
 import { auth } from '@/firebase-config';
+import styled from 'styled-components';
 
 const DASHBOARD_DEV_BYPASS =
   import.meta.env.VITE_DASHBOARD_DEV_BYPASS === 'true';
@@ -251,9 +250,7 @@ async function fetchDashboardJson(endpoint) {
 
   if (!response.ok) {
     const errorBody = await response.json().catch(() => null);
-    throw new Error(
-      errorBody?.error || `Request failed (${response.status})`
-    );
+    throw new Error(errorBody?.error || `Request failed (${response.status})`);
   }
 
   return response.json();
@@ -297,14 +294,17 @@ export default function DataDashboard() {
       if (metricsResult.status === 'fulfilled') {
         setCards(metricsResult.value.cards || []);
       } else {
-        setMetricsError(metricsResult.reason?.message || 'Failed to load metrics.');
+        setMetricsError(
+          metricsResult.reason?.message || 'Failed to load metrics.'
+        );
       }
 
       if (categoriesResult.status === 'fulfilled') {
         setCategories(categoriesResult.value.categories || []);
       } else {
         setCategoriesError(
-          categoriesResult.reason?.message || 'Failed to load category distribution.'
+          categoriesResult.reason?.message ||
+            'Failed to load category distribution.'
         );
       }
 
@@ -312,7 +312,8 @@ export default function DataDashboard() {
         setProposals(proposalsResult.value.items || []);
       } else {
         setProposalsError(
-          proposalsResult.reason?.message || 'Failed to load proposals from database.'
+          proposalsResult.reason?.message ||
+            'Failed to load proposals from database.'
         );
       }
 
@@ -341,12 +342,16 @@ export default function DataDashboard() {
               <CardHeader>
                 <CardTitle>{card.title}</CardTitle>
                 {card.pendingCount > 0 ? (
-                  <PendingBadge>&middot; {card.pendingCount} pending</PendingBadge>
+                  <PendingBadge>
+                    &middot; {card.pendingCount} pending
+                  </PendingBadge>
                 ) : null}
               </CardHeader>
 
               <ValueRow>
-                <MainNumber>{Number(card.value || 0).toLocaleString()}</MainNumber>
+                <MainNumber>
+                  {Number(card.value || 0).toLocaleString()}
+                </MainNumber>
                 <SubText>{card.timeframe}</SubText>
               </ValueRow>
             </Card>
@@ -362,7 +367,8 @@ export default function DataDashboard() {
             <StateText $error>{categoriesError}</StateText>
           ) : !categories.length ? (
             <EmptyState>
-              No category data yet. Percentages will appear after proposals are submitted.
+              No category data yet. Percentages will appear after proposals are
+              submitted.
             </EmptyState>
           ) : (
             <DistList>

@@ -1,5 +1,9 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { PrivateRoute, PublicOnlyRoute } from '@/common/components/routes/ProtectedRoutes';
+
+import {
+  PrivateRoute,
+  PublicOnlyRoute,
+} from '@/common/components/routes/ProtectedRoutes';
 import { UserProvider } from '@/common/contexts/UserContext';
 import NavLayout from '@/common/layouts/NavLayout';
 import AuthCallback from '@/pages/account/AuthCallback';
@@ -7,40 +11,41 @@ import Login from '@/pages/account/Login';
 import RequestPasswordReset from '@/pages/account/RequestPasswordReset';
 import ResetPassword from '@/pages/account/ResetPassword';
 import SignUp from '@/pages/account/SignUp';
+import AuditLog from '@/pages/audit-log/AuditLog';
+import BrowseIdeas from '@/pages/browse/BrowseIdeas';
+import DataDashboard from '@/pages/dashboard/DataDashboard';
 import Home from '@/pages/home/Home';
 import NotFound from '@/pages/not-found/NotFound';
-import BrowseIdeas from '@/pages/browse/BrowseIdeas';
 import SubmissionForm from '@/pages/submit/SubmissionForm';
-import DataDashboard from '@/pages/dashboard/DataDashboard';
-import AuditLog from '@/pages/audit-log/AuditLog';
+
 import './App.css';
 
 export default function App() {
   return (
     <UserProvider>
       <BrowserRouter>
-       <Routes>
+        <Routes>
           <Route path='/' element={<NavLayout />}>
-            
             {/* STANDARD ROUTES */}
-            <Route index element={<Home />} /> 
+            <Route index element={<Home />} />
             <Route path='browse' element={<BrowseIdeas />} />
             <Route path='submit' element={<SubmissionForm />} />
-            
+
             {/* --- TEMPORARILY UNPROTECTED FOR TESTING --- */}
             <Route path='dashboard' element={<DataDashboard />} />
             <Route path='audit-log' element={<AuditLog />} />
 
             {/* PROTECTED ROUTES */}
-            <Route element={<PrivateRoute />}>
-               {/* Empty for now! */}
-            </Route>
+            <Route element={<PrivateRoute />}>{/* Empty for now! */}</Route>
 
             {/* PUBLIC ONLY ROUTES */}
             <Route element={<PublicOnlyRoute />}>
               <Route path='login' element={<Login />} />
               <Route path='signup' element={<SignUp />} />
-              <Route path='forgot-password' element={<RequestPasswordReset />} />
+              <Route
+                path='forgot-password'
+                element={<RequestPasswordReset />}
+              />
             </Route>
 
             <Route path='auth/callback' element={<AuthCallback />} />

@@ -1,6 +1,7 @@
 import React from 'react';
-import styled from 'styled-components';
+
 import AuditLogEntry from '@/common/components/cards/AuditLogEntry';
+import styled from 'styled-components';
 
 // --- STYLED COMPONENTS ---
 
@@ -50,17 +51,42 @@ const LogContainer = styled.div`
   border: 1px solid #d9d9d9;
   border-radius: 30px;
   padding: 3rem 4rem;
-  box-shadow: 0px 4px 12px rgba(0,0,0,0.03);
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.03);
 `;
 
 // --- DUMMY DATA ---
 
 const dummyLogs = [
-  { id: 1, user: "Admin User 1", action: "Logged Out", timestamp: "Today at 12:34 PM" },
-  { id: 2, user: "Admin User 1", action: "Approved Proposal #842", timestamp: "Today at 11:15 AM" },
-  { id: 3, user: "Admin User 2", action: "Logged In", timestamp: "Yesterday at 4:30 PM" },
-  { id: 4, user: "Admin User 1", action: "Deleted Comment", timestamp: "Yesterday at 2:00 PM" },
-  { id: 5, user: "System", action: "Weekly Backup Completed", timestamp: "Sunday at 12:00 AM" },
+  {
+    id: 1,
+    user: 'Admin User 1',
+    action: 'Logged Out',
+    timestamp: 'Today at 12:34 PM',
+  },
+  {
+    id: 2,
+    user: 'Admin User 1',
+    action: 'Approved Proposal #842',
+    timestamp: 'Today at 11:15 AM',
+  },
+  {
+    id: 3,
+    user: 'Admin User 2',
+    action: 'Logged In',
+    timestamp: 'Yesterday at 4:30 PM',
+  },
+  {
+    id: 4,
+    user: 'Admin User 1',
+    action: 'Deleted Comment',
+    timestamp: 'Yesterday at 2:00 PM',
+  },
+  {
+    id: 5,
+    user: 'System',
+    action: 'Weekly Backup Completed',
+    timestamp: 'Sunday at 12:00 AM',
+  },
 ];
 
 // --- MAIN PAGE RENDER ---
@@ -68,28 +94,31 @@ const dummyLogs = [
 export default function AuditLog() {
   return (
     <PageContainer>
-      
       <HeaderRow>
         <Title>Admin Audit Log</Title>
         <FilterGroup>
-          <StyledSelect defaultValue="">
-            <option value="" disabled>Filter By Category</option>
-            <option value="login">Logins/Logouts</option>
-            <option value="proposal">Proposals</option>
-            <option value="comment">Comments</option>
+          <StyledSelect defaultValue=''>
+            <option value='' disabled>
+              Filter By Category
+            </option>
+            <option value='login'>Logins/Logouts</option>
+            <option value='proposal'>Proposals</option>
+            <option value='comment'>Comments</option>
           </StyledSelect>
-          
-          <StyledSelect defaultValue="">
-            <option value="" disabled>Filter By Date</option>
-            <option value="today">Today</option>
-            <option value="week">This Week</option>
-            <option value="month">This Month</option>
+
+          <StyledSelect defaultValue=''>
+            <option value='' disabled>
+              Filter By Date
+            </option>
+            <option value='today'>Today</option>
+            <option value='week'>This Week</option>
+            <option value='month'>This Month</option>
           </StyledSelect>
         </FilterGroup>
       </HeaderRow>
 
       <LogContainer>
-        {dummyLogs.map(log => (
+        {dummyLogs.map((log) => (
           <AuditLogEntry
             key={log.id}
             user={log.user}
@@ -98,7 +127,6 @@ export default function AuditLog() {
           />
         ))}
       </LogContainer>
-
     </PageContainer>
   );
 }

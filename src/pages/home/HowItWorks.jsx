@@ -1,4 +1,5 @@
 import React from 'react';
+
 import styled from 'styled-components';
 
 // --- STYLED COMPONENTS ---
@@ -14,7 +15,7 @@ const HeaderGroup = styled.div`
 `;
 
 const Subtitle = styled.p`
-  color: #E2B853; /* RSAE Gold */
+  color: #e2b853; /* RSAE Gold */
   font-weight: 700;
   margin-bottom: 0.5rem;
   text-transform: uppercase;
@@ -44,8 +45,8 @@ const StepCard = styled.div`
   background-color: #ffffff;
   padding: 2.5rem 2rem;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  border-top: 4px solid #E2B853; /* Gold accent line at the top of each card */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-top: 4px solid #e2b853; /* Gold accent line at the top of each card */
 `;
 
 const StepNumber = styled.div`
@@ -73,10 +74,26 @@ const StepText = styled.p`
 
 export default function HowItWorks() {
   const stepsData = [
-    { num: '01', title: 'Submit', text: 'Share your idea for the neighbourhood through a basic form' },
-    { num: '02', title: 'Review', text: 'Share your idea for the neighbourhood through a basic form' },
-    { num: '03', title: 'Browse', text: 'Share your idea for the neighbourhood through a basic form' },
-    { num: '04', title: 'Update', text: 'Share your idea for the neighbourhood through a basic form' }
+    {
+      num: '01',
+      title: 'Submit',
+      text: 'Share your idea for the neighbourhood through a basic form',
+    },
+    {
+      num: '02',
+      title: 'Review',
+      text: 'Share your idea for the neighbourhood through a basic form',
+    },
+    {
+      num: '03',
+      title: 'Browse',
+      text: 'Share your idea for the neighbourhood through a basic form',
+    },
+    {
+      num: '04',
+      title: 'Update',
+      text: 'Share your idea for the neighbourhood through a basic form',
+    },
   ];
 
   return (
@@ -85,7 +102,7 @@ export default function HowItWorks() {
         <Subtitle>How It Works —</Subtitle>
         <Title>Four Simple Steps</Title>
         <Description>
-          A clear and simple process to make sure your ideas, and the ones your 
+          A clear and simple process to make sure your ideas, and the ones your
           community supports, are implemented transparently.
         </Description>
       </HeaderGroup>
