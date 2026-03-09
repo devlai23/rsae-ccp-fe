@@ -19,7 +19,7 @@ const PageTitle = styled.h1`
   text-align: center;
 `;
 
-const FormContainer = styled.div`
+const FormContainer = styled.form`
   background-color: #ffffff;
   border: 1px solid #d9d9d9;
   border-radius: 30px;
@@ -148,17 +148,95 @@ const PrivacyNotice = styled.div`
 
 export default function SubmissionForm() {
   // state for relation toggles
-  const [relation, setRelation] = useState('No Relation');
+  const [formData, setFormData] = useState({
+    category: '',
+    description: '',
+    fullName: '',
+    email: '',
+    relationToEvanston: 'No Relation',
+  });
+
+  const [errors, setErrors] = useState({});
+  const [success, setSuccess] = useState('');
+  //const[isSubmitting, setIsSubmitting] = useState(false);
+
+  function handleChange(event) {
+    const { name, value } = event.target;
+
+    setFormData((prev) => ({
+      ...prev,
+    [name]: value,
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
+      [name]: '',
+    }));
+  }
+
+
+
+
+  function validateForm() {
+  const newErrors = {};
+
+  if (!formData.category.trim()) {
+    newErrors.category = 'Please choose a category.';
+  }
+
+  if (!formData.description.trim()) {
+    newErrors.description = 'Idea description cannot be blank.';
+  }
+
+  if (!formData.fullName.trim()) {
+    newErrors.fullName = 'Please enter your name.';
+  }
+
+  if (!formData.email.trim()) {
+    newErrors.email = 'Please enter your email.';
+  } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    newErrors.email = 'Enter a valid email address.';
+  }
+
+  if (!formData.relationToEvanston.trim()) {
+    newErrors.relationToEvanston = 'Please select your relation to Evanston.';
+  }
+
+  return newErrors;
+}
+
+
+
+  function handleSubmit(event) {
+    event.preventDefault();
+
+    const validationErrors = validateForm();
+    setErrors(validationErrors);
+    setSuccess('');
+
+    if (Object.keys(validationErrors).length > 0) {
+      return;
+    }
+    console.log('Form is valid:', formData);
+    setSuccess('Proposal submitted successfully!');
+  }
+
+
+
 
   return (
     <PageWrapper>
       <PageTitle>Community Proposal Submission Form</PageTitle>
       
-      <FormContainer>
+      <FormContainer onSubmit={handleSubmit}>
         {/* CATEGORY */}
         <FormGroup>
           <Label>Select the category that fits the best:</Label>
-          <StyledSelect defaultValue="">
+          <StyledSelect 
+          name="category"
+          value={formData.category}
+          onChange={handleChange}
+          >
             <option value="" disabled>Choose a category...</option>
             <option value="housing">Housing</option>
             <option value="health">Health & Wellness</option>
@@ -166,12 +244,20 @@ export default function SubmissionForm() {
             <option value="arts">Arts & Culture</option>
             <option value="education">Education</option>
           </StyledSelect>
+          {errors.category && <p>{errors.category}</p>}
         </FormGroup>
 
         {/* DESCRIPTION */}
         <FormGroup>
           <Label>Describe your idea in detail:</Label>
-          <StyledTextArea placeholder="Keep your ideas clear and actionable for the best community support." />
+          <StyledTextArea 
+          type="text"
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          placeholder="Keep your ideas clear and actionable for the best community support." 
+          />
+          {errors.description && <p>{errors.description}</p>}
         </FormGroup>
 
         {/* PERSONAL INFO SECTION */}
@@ -183,11 +269,22 @@ export default function SubmissionForm() {
         <InputRow>
           <FormGroup style={{ flex: 1, marginBottom: 0 }}>
             <Label style={{ fontSize: '1rem', color: '#666' }}>Full Name</Label>
-            <StyledInput type="text" placeholder="Jane Doe" />
+            <StyledInput type="text" 
+            name="fullName"
+            value={formData.fullName}
+            onChange={handleChange}
+            placeholder="Jane Doe" 
+            />
+            {errors.fullName && <p>{errors.fullName}</p>}
           </FormGroup>
           <FormGroup style={{ flex: 1, marginBottom: 0 }}>
             <Label style={{ fontSize: '1rem', color: '#666' }}>Email Address</Label>
-            <StyledInput type="email" placeholder="jane@example.com" />
+            <StyledInput type="email" 
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="jane@example.com" />
+            {errors.email && <p>{errors.email}</p>}
           </FormGroup>
         </InputRow>
 
@@ -199,26 +296,42 @@ export default function SubmissionForm() {
           <ToggleGroup>
             <ToggleButton 
               type="button"
-              $active={relation === 'No Relation'} 
-              onClick={() => setRelation('No Relation')}
+              $active={formData.relationToEvanston === 'No Relation'} 
+              onClick={() => 
+                setFormData((prev) => ({
+                  ...prev,
+                  relationToEvanston: 'No Relation',
+                }))
+              }
             >
               No Relation
             </ToggleButton>
             <ToggleButton 
               type="button"
-              $active={relation === 'Former Resident'} 
-              onClick={() => setRelation('Former Resident')}
+              $active={formData.relationToEvanston === 'Former Resident'} 
+              onClick={() => 
+                setFormData((prev) => ({
+                  ...prev,
+                  relationToEvanston: 'Former Resident',
+                }))
+              }
             >
               Former Resident
             </ToggleButton>
             <ToggleButton 
               type="button"
-              $active={relation === 'Current Resident'} 
-              onClick={() => setRelation('Current Resident')}
+              $active={formData.relationToEvanston === 'Current Resident'} 
+              onClick={() =>
+                setFormData((prev) => ({
+                  ...prev,
+                  relationToEvanston: 'Current Resident',
+                }))
+              }
             >
               Current Resident
             </ToggleButton>
           </ToggleGroup>
+          {errors.relationToEvanston && <p>{errors.relationToEvanston}</p>}
         </FormGroup>
 
         {/* PRIVACY NOTICE */}
@@ -233,10 +346,11 @@ export default function SubmissionForm() {
 
         {/* SUBMIT BUTTON */}
         <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <button style={{ backgroundColor: '#E2B853', color: 'black', padding: '1rem 3rem', fontSize: '1.2rem' }}>
+          <button type="submit" style={{ backgroundColor: '#E2B853', color: 'black', padding: '1rem 3rem', fontSize: '1.2rem' }}>
             Submit Proposal
           </button>
         </div>
+        {success && <p>{success}</p>}
 
       </FormContainer>
     </PageWrapper>
