@@ -234,9 +234,9 @@ const buildDashboardUrl = (endpoint) => {
 
 async function fetchDashboardJson(endpoint) {
   const token = await auth.currentUser?.getIdToken?.();
-  if (!token && !DASHBOARD_DEV_BYPASS) {
-    throw new Error('Admin login required.');
-  }
+  // if (!token && !DASHBOARD_DEV_BYPASS) {
+  //   throw new Error('Admin login required.');
+  // }
 
   const headers = {};
   if (token) {

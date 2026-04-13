@@ -153,7 +153,7 @@ export default function Home() {
     <div>
       {/* HERO SECTION */}
       <HeroContainer>
-        <TopSubtitle>— For our local community, Evanston</TopSubtitle>
+        <TopSubtitle>For our local community, Evanston</TopSubtitle>
 
         <MainTitle>
           A Transparent Process from Idea <br />
