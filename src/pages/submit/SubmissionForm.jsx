@@ -157,61 +157,6 @@ const ErrorText = styled.p`
   text-align: center;
 `;
 
-const ModalOverlay = styled.div`
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-`;
-
-const ModalCard = styled.div`
-  width: 100%;
-  max-width: 520px;
-  background-color: #ffffff;
-  border-radius: 20px;
-  border: 1px solid #e2e2e2;
-  padding: 2rem;
-  text-align: center;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15);
-`;
-
-const ModalTitle = styled.h2`
-  margin: 0 0 0.75rem;
-  font-size: 1.6rem;
-`;
-
-const ModalMessage = styled.p`
-  margin: 0;
-  color: #4f4f4f;
-  line-height: 1.5;
-`;
-
-const ModalActions = styled.div`
-  margin-top: 1.75rem;
-  display: flex;
-  gap: 0.75rem;
-  justify-content: center;
-
-  @media (max-width: 520px) {
-    flex-direction: column;
-  }
-`;
-
-const ModalActionButton = styled.button`
-  border: 1px solid #d2d2d2;
-  background-color: ${(props) => (props.$primary ? '#e2b853' : '#ffffff')};
-  color: #1f1f1f;
-  border-radius: 12px;
-  padding: 0.8rem 1.2rem;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-`;
-
 // --- COMPONENT RENDER ---
 
 export default function SubmissionForm() {
@@ -227,7 +172,6 @@ export default function SubmissionForm() {
   });
 
   const [errors, setErrors] = useState({});
-  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   //const[isSubmitting, setIsSubmitting] = useState(false);
 
   function handleChange(event) {
@@ -279,7 +223,6 @@ export default function SubmissionForm() {
 
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
-      setIsSuccessModalOpen(false);
       return;
     }
 
@@ -308,13 +251,15 @@ export default function SubmissionForm() {
       console.log('Successfully saved to backend:', result);
 
       setErrors({});
-      setIsSuccessModalOpen(true);
+      navigate('/', {
+        replace: true,
+        state: { submissionSuccessToast: true },
+      });
     } catch (error) {
       console.error('Submission error:', error);
       setErrors({
         submit: error.message || 'An error occurred while submitting.',
       });
-      setIsSuccessModalOpen(false);
     }
   }
 
@@ -462,46 +407,6 @@ export default function SubmissionForm() {
         </div>
         {errors.submit ? <ErrorText>{errors.submit}</ErrorText> : null}
       </FormContainer>
-
-      {isSuccessModalOpen ? (
-        <ModalOverlay
-          onClick={() => setIsSuccessModalOpen(false)}
-          role='presentation'
-        >
-          <ModalCard
-            role='dialog'
-            aria-modal='true'
-            aria-labelledby='submission-success-title'
-            onClick={(event) => event.stopPropagation()}
-          >
-            <ModalTitle id='submission-success-title'>
-              Proposal Submitted
-            </ModalTitle>
-            <ModalMessage>
-              Your proposal was submitted successfully and will be reviewed by
-              the team.
-            </ModalMessage>
-            <ModalActions>
-              <ModalActionButton
-                $primary
-                type='button'
-                onClick={() => {
-                  setIsSuccessModalOpen(false);
-                  navigate('/');
-                }}
-              >
-                Return to Homepage
-              </ModalActionButton>
-              <ModalActionButton
-                type='button'
-                onClick={() => setIsSuccessModalOpen(false)}
-              >
-                Stay on This Page
-              </ModalActionButton>
-            </ModalActions>
-          </ModalCard>
-        </ModalOverlay>
-      ) : null}
     </PageWrapper>
   );
 }
