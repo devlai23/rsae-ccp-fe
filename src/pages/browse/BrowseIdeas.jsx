@@ -195,7 +195,7 @@ export default function BrowseIdeas() {
   const [sort, setSort] = useState('newest');
   const [activeTag, setActiveTag] = useState('all');
 
-  const [tags, setTags] = useState([]);
+  const [, setTags] = useState([]);
   const [proposals, setProposals] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -350,17 +350,19 @@ export default function BrowseIdeas() {
           ) : null}
 
           {!isLoading && !error
-            ? proposals.map((proposal) => (
-                <ProposalEntry
-                  key={proposal.id}
-                  title={proposal.title}
-                  category={proposal.category}
-                  description={proposal.description}
-                  date={formatDate(proposal.submittedAt)}
-                  votes={proposal.votes}
-                  onCommentClick={() => openProposalDetails(proposal.id)}
-                />
-              ))
+            ? proposals
+                .filter((proposal) => proposal.status === 'approved')
+                .map((proposal) => (
+                  <ProposalEntry
+                    key={proposal.id}
+                    title={proposal.title}
+                    category={proposal.category}
+                    description={proposal.description}
+                    date={formatDate(proposal.submittedAt)}
+                    votes={proposal.votes}
+                    onCommentClick={() => openProposalDetails(proposal.id)}
+                  />
+                ))
             : null}
         </FeedArea>
       </LayoutGrid>

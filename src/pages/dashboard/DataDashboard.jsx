@@ -323,6 +323,25 @@ export default function DataDashboard() {
     load();
   }, []);
 
+  const handleDecision = async (id, status) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/proposals/${id}/status`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status }),
+        }
+      );
+      if (!response.ok) {
+        throw new Error('Failed to update proposal status');
+      }
+      window.location.reload();
+    } catch (error) {
+      alert('Failed to update proposal status: ' + (error.message || error));
+    }
+  };
+
   return (
     <PageContainer>
       <Title>Dashboard Overview</Title>
@@ -423,7 +442,43 @@ export default function DataDashboard() {
                       <td>{proposal.votes}</td>
                       <td>{proposal.submittedBy}</td>
                       <td>{formatDate(proposal.submittedAt)}</td>
-                      <td>{proposal.status}</td>
+                      <td>
+                        {proposal.status === 'pending' ? (
+                          <>
+                            <button
+                              style={{
+                                marginRight: '0.5rem',
+                                background: '#c7e7c7',
+                                border: 'none',
+                                borderRadius: '6px',
+                                padding: '0.3rem 0.7rem',
+                                cursor: 'pointer',
+                              }}
+                              onClick={() =>
+                                handleDecision(proposal.id, 'approved')
+                              }
+                            >
+                              Accept
+                            </button>
+                            <button
+                              style={{
+                                background: '#ffd8dd',
+                                border: 'none',
+                                borderRadius: '6px',
+                                padding: '0.3rem 0.7rem',
+                                cursor: 'pointer',
+                              }}
+                              onClick={() =>
+                                handleDecision(proposal.id, 'rejected')
+                              }
+                            >
+                              Reject
+                            </button>
+                          </>
+                        ) : (
+                          proposal.status
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

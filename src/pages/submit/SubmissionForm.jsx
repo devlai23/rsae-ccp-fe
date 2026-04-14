@@ -387,7 +387,9 @@ export default function SubmissionForm() {
 
         {/* SUBMIT BUTTON */}
         <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <ProposalSubmitButton type='submit'>Submit Proposal</ProposalSubmitButton>
+          <ProposalSubmitButton type='submit'>
+            Submit Proposal
+          </ProposalSubmitButton>
         </div>
         {success && <p>{success}</p>}
       </FormContainer>

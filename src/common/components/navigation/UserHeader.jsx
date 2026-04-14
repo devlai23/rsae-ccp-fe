@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import rsaeLogo from '@/assets/rsae-logo.jpg';
-import { useUser } from '@/common/contexts/UserContext';
 import ProposalSubmitButton from '@/common/components/buttons/ProposalSubmitButton';
+import { useUser } from '@/common/contexts/UserContext';
 import styled from 'styled-components';
 
 import LogoutModal from './LogoutModal';
@@ -110,7 +110,9 @@ export default function UserHeader() {
         )}
 
         <SubmitProposalLink to='/submit'>
-          <ProposalSubmitButton type='button'>Submit Proposal</ProposalSubmitButton>
+          <ProposalSubmitButton type='button'>
+            Submit Proposal
+          </ProposalSubmitButton>
         </SubmitProposalLink>
       </NavLinks>
 
