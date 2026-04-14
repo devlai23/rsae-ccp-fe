@@ -336,7 +336,11 @@ export default function DataDashboard() {
       if (!response.ok) {
         throw new Error('Failed to update proposal status');
       }
-      window.location.reload();
+      setProposals((currentProposals) =>
+        currentProposals.map((proposal) =>
+          proposal.id === id ? { ...proposal, status } : proposal
+        )
+      );
     } catch (error) {
       alert('Failed to update proposal status: ' + (error.message || error));
     }
@@ -444,10 +448,16 @@ export default function DataDashboard() {
                       <td>{formatDate(proposal.submittedAt)}</td>
                       <td>
                         {proposal.status === 'pending' ? (
-                          <>
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'flex-start',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                            }}
+                          >
                             <button
                               style={{
-                                marginRight: '0.5rem',
                                 background: '#c7e7c7',
                                 border: 'none',
                                 borderRadius: '6px',
@@ -474,7 +484,7 @@ export default function DataDashboard() {
                             >
                               Reject
                             </button>
-                          </>
+                          </div>
                         ) : (
                           proposal.status
                         )}
