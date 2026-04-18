@@ -210,6 +210,13 @@ export default function BrowseIdeas() {
     [search, category, status, sort, activeTag]
   );
 
+  const visibleProposals = useMemo(() => {
+    if (isAdmin) {
+      return proposals;
+    }
+    return proposals.filter((proposal) => proposal.status === 'approved');
+  }, [proposals, isAdmin]);
+
   useEffect(() => {
     const loadTags = async () => {
       try {
@@ -229,9 +236,66 @@ export default function BrowseIdeas() {
       setError('');
       try {
         const data = await fetchApi(`/proposals${queryString}`);
-        setProposals(data.items || []);
+        const items = data.items || [];
+        setProposals(items);
+        // #region agent log
+        const statusCounts = items.reduce((acc, proposalItem) => {
+          const key = proposalItem.status ?? 'unknown';
+          acc[key] = (acc[key] || 0) + 1;
+          return acc;
+        }, {});
+        const approvedOnlyCount = items.filter(
+          (proposalItem) => proposalItem.status === 'approved'
+        ).length;
+        const clientVisibleCount = isAdmin ? items.length : approvedOnlyCount;
+        fetch('http://127.0.0.1:7597/ingest/2b765efe-bf6e-4410-862c-372765e6b5a4', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Debug-Session-Id': 'f0e25d',
+          },
+          body: JSON.stringify({
+            sessionId: 'f0e25d',
+            runId: 'post-fix',
+            hypothesisId: 'H1',
+            location: 'BrowseIdeas.jsx:loadProposals',
+            message: 'proposals fetch success',
+            data: {
+              totalItems: items.length,
+              statusCounts,
+              approvedOnlyCount,
+              clientVisibleCount,
+              adminSeesAllStatuses: isAdmin,
+              isAdmin,
+              queryString,
+            },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
       } catch (loadError) {
         setError(loadError.message || 'Failed to load proposals');
+        // #region agent log
+        fetch('http://127.0.0.1:7597/ingest/2b765efe-bf6e-4410-862c-372765e6b5a4', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Debug-Session-Id': 'f0e25d',
+          },
+          body: JSON.stringify({
+            sessionId: 'f0e25d',
+            runId: 'post-fix',
+            hypothesisId: 'H2',
+            location: 'BrowseIdeas.jsx:loadProposals',
+            message: 'proposals fetch error',
+            data: {
+              errorMessage: loadError?.message ?? String(loadError),
+              queryString,
+            },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
       } finally {
         setIsLoading(false);
       }
@@ -350,19 +414,17 @@ export default function BrowseIdeas() {
           ) : null}
 
           {!isLoading && !error
-            ? proposals
-                .filter((proposal) => proposal.status === 'approved')
-                .map((proposal) => (
-                  <ProposalEntry
-                    key={proposal.id}
-                    title={proposal.title}
-                    category={proposal.category}
-                    description={proposal.description}
-                    date={formatDate(proposal.submittedAt)}
-                    votes={proposal.votes}
-                    onCommentClick={() => openProposalDetails(proposal.id)}
-                  />
-                ))
+            ? visibleProposals.map((proposal) => (
+                <ProposalEntry
+                  key={proposal.id}
+                  title={proposal.title}
+                  category={proposal.category}
+                  description={proposal.description}
+                  date={formatDate(proposal.submittedAt)}
+                  votes={proposal.votes}
+                  onCommentClick={() => openProposalDetails(proposal.id)}
+                />
+              ))
             : null}
         </FeedArea>
       </LayoutGrid>
