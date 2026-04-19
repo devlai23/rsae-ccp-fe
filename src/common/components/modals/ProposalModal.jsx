@@ -155,7 +155,7 @@ const CommentComposer = styled.form`
 `;
 
 const CommentTextArea = styled.textarea`
-  width: 100%;
+  width: 96%;
   min-height: 92px;
   border: 1px solid #dfdfdf;
   border-radius: 14px;
