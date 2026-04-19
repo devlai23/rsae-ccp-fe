@@ -112,9 +112,7 @@ export default function UserHeader() {
         <StyledLink to='/browse'>Browse Ideas</StyledLink>
         {user ? (
           <LogoutButton onClick={handleLogoutClick}>Log Out</LogoutButton>
-        ) : (
-          <StyledLink to='/login'>Admin Log In</StyledLink>
-        )}
+        ) : null}
 
         <SubmitProposalLink to='/submit'>
           <ProposalSubmitButton type='button'>
