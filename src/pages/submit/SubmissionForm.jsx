@@ -3,6 +3,14 @@ import React, { useState } from 'react';
 import ProposalSubmitButton from '@/common/components/buttons/ProposalSubmitButton';
 import styled from 'styled-components';
 
+const buildApiUrl = (path) => {
+  const base = import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '');
+  if (!base) {
+    throw new Error('Missing VITE_BACKEND_URL in frontend env.');
+  }
+  return `${base}${path}`;
+};
+
 // --- STYLED COMPONENTS ---
 
 const PageWrapper = styled.div`
@@ -227,13 +235,38 @@ export default function SubmissionForm() {
         submittedBy: formData.fullName,
       };
 
-      const response = await fetch('http://localhost:5050/proposals', {
+      const proposalsUrl = buildApiUrl('/proposals');
+      const response = await fetch(proposalsUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
       });
+
+      // #region agent log
+      fetch('http://127.0.0.1:7597/ingest/2b765efe-bf6e-4410-862c-372765e6b5a4', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Debug-Session-Id': 'f0e25d',
+        },
+        body: JSON.stringify({
+          sessionId: 'f0e25d',
+          runId: 'post-fix',
+          hypothesisId: 'H3',
+          location: 'SubmissionForm.jsx:handleSubmit',
+          message: 'proposal POST response',
+          data: {
+            ok: response.ok,
+            status: response.status,
+            postPath: '/proposals',
+            usesViteBackendUrl: true,
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -247,14 +280,29 @@ export default function SubmissionForm() {
       setErrors({});
     } catch (error) {
       console.error('Submission error:', error);
+      // #region agent log
+      fetch('http://127.0.0.1:7597/ingest/2b765efe-bf6e-4410-862c-372765e6b5a4', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Debug-Session-Id': 'f0e25d',
+        },
+        body: JSON.stringify({
+          sessionId: 'f0e25d',
+          runId: 'post-fix',
+          hypothesisId: 'H3',
+          location: 'SubmissionForm.jsx:handleSubmit',
+          message: 'proposal POST catch',
+          data: { errorMessage: error?.message ?? String(error) },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
       setErrors({
         submit: error.message || 'An error occurred while submitting.',
       });
       setSuccess('');
     }
-
-    console.log('Form is valid:', formData);
-    setSuccess('Proposal submitted successfully!');
   }
 
   return (
