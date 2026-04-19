@@ -319,10 +319,10 @@ export default function Home() {
         <FooterBrand>
           <FooterLogo
             src={footerLogo}
-            alt='Reparations Stakeholder Authority of Evanston'
+            alt='Reparations Stakeholders Authority of Evanston'
           />
           <FooterBrandText>
-            Reparations Stakeholder
+            Reparations Stakeholders
             <br />
             Authority of Evanston
           </FooterBrandText>
