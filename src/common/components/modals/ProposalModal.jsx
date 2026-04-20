@@ -1,3 +1,5 @@
+import ProposalVotePanel from '@/common/components/proposals/ProposalVotePanel';
+import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
 const Overlay = styled.div`
@@ -39,6 +41,22 @@ const CloseButton = styled.button`
 const Title = styled.h2`
   margin: 0 0 0.35rem;
   font-size: 1.75rem;
+`;
+
+const HeaderRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+`;
+
+const HeaderCopy = styled.div`
+  flex: 1;
+  min-width: 0;
 `;
 
 const Meta = styled.div`
@@ -113,6 +131,7 @@ export default function ProposalModal({
   isLoading,
   error,
   onClose,
+  onVote,
 }) {
   return (
     <Overlay onClick={onClose}>
@@ -125,16 +144,29 @@ export default function ProposalModal({
 
         {!isLoading && !error && proposalData ? (
           <>
-            <Title>{proposalData.title}</Title>
-            <Meta>
-              <InfoBadge>Category: {proposalData.category}</InfoBadge>
-              <InfoBadge>Status: {proposalData.status}</InfoBadge>
-              <InfoBadge>Votes: {proposalData.votes}</InfoBadge>
-              <InfoBadge>Submitted By: {proposalData.submittedBy}</InfoBadge>
-              <InfoBadge>
-                Submitted: {formatDate(proposalData.submittedAt)}
-              </InfoBadge>
-            </Meta>
+            <HeaderRow>
+              <HeaderCopy>
+                <Title>{proposalData.title}</Title>
+                <Meta>
+                  <InfoBadge>Category: {proposalData.category}</InfoBadge>
+                  <InfoBadge>Status: {proposalData.status}</InfoBadge>
+                  <InfoBadge>
+                    Submitted By: {proposalData.submittedBy}
+                  </InfoBadge>
+                  <InfoBadge>
+                    Submitted: {formatDate(proposalData.submittedAt)}
+                  </InfoBadge>
+                </Meta>
+              </HeaderCopy>
+
+              <ProposalVotePanel
+                currentVote={proposalData.currentVote}
+                downvotes={proposalData.downvotes}
+                onVote={onVote}
+                upvotes={proposalData.upvotes}
+                votes={proposalData.votes}
+              />
+            </HeaderRow>
 
             <DetailBox>
               <SectionTitle>Description</SectionTitle>
@@ -159,3 +191,30 @@ export default function ProposalModal({
     </Overlay>
   );
 }
+
+ProposalModal.propTypes = {
+  error: PropTypes.string.isRequired,
+  isLoading: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onVote: PropTypes.func.isRequired,
+  proposalData: PropTypes.shape({
+    category: PropTypes.string.isRequired,
+    currentVote: PropTypes.oneOf(['up', 'down', null]),
+    description: PropTypes.string.isRequired,
+    downvotes: PropTypes.number.isRequired,
+    status: PropTypes.string,
+    submittedAt: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.instanceOf(Date),
+    ]).isRequired,
+    submittedBy: PropTypes.string.isRequired,
+    tags: PropTypes.arrayOf(PropTypes.string),
+    title: PropTypes.string.isRequired,
+    upvotes: PropTypes.number.isRequired,
+    votes: PropTypes.number.isRequired,
+  }),
+};
+
+ProposalModal.defaultProps = {
+  proposalData: null,
+};

@@ -1,3 +1,5 @@
+import ProposalVotePanel from '@/common/components/proposals/ProposalVotePanel';
+import PropTypes from 'prop-types';
 import styled from 'styled-components';
 
 const CardContainer = styled.div`
@@ -27,8 +29,12 @@ const ContentContainer = styled.div`
 const HeaderRow = styled.div`
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
 `;
 
 const TitleGroup = styled.div`
@@ -50,12 +56,6 @@ const CategoryBadge = styled.span`
   color: #bd3c3c;
   padding: 0.24rem 0.58rem;
   font-size: 0.75rem;
-  font-weight: 600;
-`;
-
-const VoteCount = styled.div`
-  color: #4d4d4d;
-  font-size: 0.88rem;
   font-weight: 600;
 `;
 
@@ -100,9 +100,13 @@ const DetailButton = styled.button`
 export default function ProposalEntry({
   title,
   category,
+  currentVote,
+  downvotes,
   description,
   date,
+  onVote,
   votes,
+  upvotes,
   onCommentClick,
 }) {
   return (
@@ -114,7 +118,13 @@ export default function ProposalEntry({
             <Title>{title}</Title>
             <CategoryBadge>{category}</CategoryBadge>
           </TitleGroup>
-          <VoteCount>{votes} Votes</VoteCount>
+          <ProposalVotePanel
+            currentVote={currentVote}
+            downvotes={downvotes}
+            onVote={onVote}
+            upvotes={upvotes}
+            votes={votes}
+          />
         </HeaderRow>
 
         <Description>{description}</Description>
@@ -127,3 +137,20 @@ export default function ProposalEntry({
     </CardContainer>
   );
 }
+
+ProposalEntry.propTypes = {
+  category: PropTypes.string.isRequired,
+  currentVote: PropTypes.oneOf(['up', 'down', null]),
+  date: PropTypes.string.isRequired,
+  description: PropTypes.string.isRequired,
+  downvotes: PropTypes.number.isRequired,
+  onCommentClick: PropTypes.func.isRequired,
+  onVote: PropTypes.func.isRequired,
+  title: PropTypes.string.isRequired,
+  upvotes: PropTypes.number.isRequired,
+  votes: PropTypes.number.isRequired,
+};
+
+ProposalEntry.defaultProps = {
+  currentVote: null,
+};

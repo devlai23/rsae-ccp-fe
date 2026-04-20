@@ -3,6 +3,8 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import ProposalEntry from '@/common/components/cards/ProposalEntry';
 import ProposalModal from '@/common/components/modals/ProposalModal';
 import { UserContext } from '@/common/contexts/UserContext';
+import { hydrateProposalVoteData } from '@/common/hooks/useProposalVoteMemory';
+import useProposalVoteMemory from '@/common/hooks/useProposalVoteMemory';
 import { auth } from '@/firebase-config';
 import styled from 'styled-components';
 
@@ -117,6 +119,13 @@ const ResetButton = styled.button`
   cursor: pointer;
 `;
 
+const SidebarNote = styled.p`
+  margin: 0.85rem 0 0;
+  color: #696255;
+  font-size: 0.82rem;
+  line-height: 1.45;
+`;
+
 const FeedArea = styled.section``;
 
 const StateBox = styled.div`
@@ -204,10 +213,24 @@ export default function BrowseIdeas() {
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState('');
   const [selectedProposal, setSelectedProposal] = useState(null);
+  const { voteSelections, setProposalVote } = useProposalVoteMemory();
 
   const queryString = useMemo(
     () => buildQueryString({ search, category, status, sort, tag: activeTag }),
     [search, category, status, sort, activeTag]
+  );
+
+  const hydratedProposals = useMemo(
+    () =>
+      proposals.map((proposal) =>
+        hydrateProposalVoteData(proposal, voteSelections)
+      ),
+    [proposals, voteSelections]
+  );
+
+  const hydratedSelectedProposal = useMemo(
+    () => hydrateProposalVoteData(selectedProposal, voteSelections),
+    [selectedProposal, voteSelections]
   );
 
   useEffect(() => {
@@ -339,6 +362,10 @@ export default function BrowseIdeas() {
           <ResetButton type='button' onClick={resetFilters}>
             Clear Filters
           </ResetButton>
+          <SidebarNote>
+            Anonymous votes are remembered in this browser, so each device keeps
+            its own upvote or downvote history.
+          </SidebarNote>
         </Sidebar>
 
         <FeedArea>
@@ -350,13 +377,19 @@ export default function BrowseIdeas() {
           ) : null}
 
           {!isLoading && !error
-            ? proposals.map((proposal) => (
+            ? hydratedProposals.map((proposal) => (
                 <ProposalEntry
                   key={proposal.id}
                   title={proposal.title}
                   category={proposal.category}
+                  currentVote={proposal.currentVote}
+                  downvotes={proposal.downvotes}
                   description={proposal.description}
                   date={formatDate(proposal.submittedAt)}
+                  onVote={(direction) =>
+                    setProposalVote(proposal.id, direction)
+                  }
+                  upvotes={proposal.upvotes}
                   votes={proposal.votes}
                   onCommentClick={() => openProposalDetails(proposal.id)}
                 />
@@ -367,9 +400,16 @@ export default function BrowseIdeas() {
 
       {isModalOpen ? (
         <ProposalModal
-          proposalData={selectedProposal}
+          proposalData={hydratedSelectedProposal}
           isLoading={modalLoading}
           error={modalError}
+          onVote={(direction) => {
+            if (!hydratedSelectedProposal) {
+              return;
+            }
+
+            setProposalVote(hydratedSelectedProposal.id, direction);
+          }}
           onClose={() => {
             setIsModalOpen(false);
             setSelectedProposal(null);

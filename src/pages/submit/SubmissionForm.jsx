@@ -232,6 +232,9 @@ export default function SubmissionForm() {
         category: formData.category,
         description: formData.description,
         submittedBy: formData.fullName,
+        upvotes: 0,
+        downvotes: 0,
+        votes: 0,
       };
 
       const response = await fetch('http://localhost:5050/proposals', {
