@@ -123,10 +123,10 @@ export default function SiteFooter() {
       <FooterBrand>
         <FooterLogo
           src={footerLogo}
-          alt='Reparations Stakeholder Authority of Evanston'
+          alt='Reparations Stakeholders Authority of Evanston'
         />
         <FooterBrandText>
-          Reparations Stakeholder
+          Reparations Stakeholders
           <br />
           Authority of Evanston
         </FooterBrandText>
@@ -159,7 +159,7 @@ export default function SiteFooter() {
           <LoginIcon src={loginIcon} alt='' aria-hidden='true' />
         </FooterLogoutButton>
       ) : (
-        <FooterLoginLink to='/login'>
+        <FooterLoginLink to='/signup'>
           <span>RSAE</span> Admin Login
           <LoginIcon src={loginIcon} alt='' aria-hidden='true' />
         </FooterLoginLink>
