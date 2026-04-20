@@ -1,3 +1,4 @@
+import VoteButtons from '@/common/components/votes/VoteButtons';
 import styled from 'styled-components';
 
 const CardContainer = styled.div`
@@ -103,7 +104,10 @@ export default function ProposalEntry({
   description,
   date,
   votes,
+  userVote,
+  onVote,
   onCommentClick,
+  disabled = false,
 }) {
   return (
     <CardContainer>
@@ -114,7 +118,7 @@ export default function ProposalEntry({
             <Title>{title}</Title>
             <CategoryBadge>{category}</CategoryBadge>
           </TitleGroup>
-          <VoteCount>{votes} Votes</VoteCount>
+          <VoteButtons votes={votes} userVote={userVote} onVote={onVote} disabled={disabled} />
         </HeaderRow>
 
         <Description>{description}</Description>

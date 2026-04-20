@@ -142,15 +142,16 @@ const formatDate = (value) =>
     year: 'numeric',
   });
 
-async function fetchApi(path) {
+async function fetchApi(path, options = {}) {
   const token = await auth.currentUser?.getIdToken?.();
-  const headers = {};
+  const headers = { ...options.headers };
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
 
   const response = await fetch(buildApiUrl(path), {
     credentials: 'include',
+    ...options,
     headers,
   });
 
@@ -204,6 +205,8 @@ export default function BrowseIdeas() {
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState('');
   const [selectedProposal, setSelectedProposal] = useState(null);
+
+  const [votingProposals, setVotingProposals] = useState(new Set());
 
   const queryString = useMemo(
     () => buildQueryString({ search, category, status, sort, tag: activeTag }),
@@ -328,6 +331,76 @@ export default function BrowseIdeas() {
     }
   };
 
+  const handleVote = async (proposalId, voteType) => {
+    if (!auth.currentUser) {
+      alert('Please log in to vote on proposals.');
+      return;
+    }
+
+    setVotingProposals((prev) => new Set(prev).add(proposalId));
+
+    const previousProposals = [...proposals];
+    const proposal = proposals.find((p) => p.id === proposalId);
+    if (!proposal) return;
+
+    const previousVote = proposal.userVote;
+    const previousVotes = proposal.votes;
+
+    const optimisticUpdate = (currentVote, currentVotes) => {
+      if (currentVote === voteType) {
+        return { newVote: null, voteChange: -1 };
+      }
+      if (currentVote === 'up' && voteType === 'down') {
+        return { newVote: 'down', voteChange: -2 };
+      }
+      if (currentVote === 'down' && voteType === 'up') {
+        return { newVote: 'up', voteChange: 2 };
+      }
+      if (voteType === 'up') {
+        return { newVote: 'up', voteChange: 1 };
+      }
+      if (voteType === 'down') {
+        return { newVote: 'down', voteChange: -1 };
+      }
+      return { newVote: null, voteChange: 0 };
+    };
+
+    const { newVote, voteChange } = optimisticUpdate(previousVote, previousVotes);
+
+    setProposals((prev) =>
+      prev.map((p) =>
+        p.id === proposalId
+          ? { ...p, votes: p.votes + voteChange, userVote: newVote }
+          : p
+      )
+    );
+
+    try {
+      const result = await fetchApi(`/proposals/${proposalId}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vote_type: voteType }),
+      });
+
+      setProposals((prev) =>
+        prev.map((p) =>
+          p.id === proposalId
+            ? { ...p, votes: result.votes, userVote: result.userVote }
+            : p
+        )
+      );
+    } catch (voteError) {
+      setProposals(previousProposals);
+      alert(voteError.message || 'Failed to record vote. Please try again.');
+    } finally {
+      setVotingProposals((prev) => {
+        const next = new Set(prev);
+        next.delete(proposalId);
+        return next;
+      });
+    }
+  };
+
   return (
     <PageContainer>
       <PageHeader>
@@ -422,7 +495,10 @@ export default function BrowseIdeas() {
                   description={proposal.description}
                   date={formatDate(proposal.submittedAt)}
                   votes={proposal.votes}
+                  userVote={proposal.userVote}
+                  onVote={(voteType) => handleVote(proposal.id, voteType)}
                   onCommentClick={() => openProposalDetails(proposal.id)}
+                  disabled={votingProposals.has(proposal.id)}
                 />
               ))
             : null}
