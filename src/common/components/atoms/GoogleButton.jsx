@@ -8,13 +8,15 @@ const StyledButton = styled.button`
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
-  background-color: white;
-  border: 1px solid #e2e2e2;
-  border-radius: 4px;
-  padding: 8px 16px;
-  color: #5f6368;
-  font-size: 14px;
+  gap: 12px;
+  background-color: #ffffff;
+  border: 1px solid #d9d9d9;
+  border-radius: 12px;
+  padding: 14px 20px;
+  color: #1a1a1a;
+  font-size: 16px;
+  font-weight: 500;
+  font-family: inherit;
   cursor: pointer;
   transition: background-color 0.2s;
 
@@ -61,12 +63,9 @@ export default function GoogleButton({
   isLoading,
   onClick,
   text = 'Sign in with Google',
+  showOrDivider = true,
 }) {
-  return (
-    <>
-      <Divider>
-        <span>Or continue with</span>
-      </Divider>
+  const button = (
       <StyledButton type='button' onClick={onClick} disabled={isLoading}>
         <svg width='18' height='18' viewBox='0 0 24 24'>
           <path
@@ -88,6 +87,18 @@ export default function GoogleButton({
         </svg>
         {text}
       </StyledButton>
+  );
+
+  if (!showOrDivider) {
+    return button;
+  }
+
+  return (
+    <>
+      <Divider>
+        <span>Or continue with</span>
+      </Divider>
+      {button}
     </>
   );
 }
@@ -96,9 +107,11 @@ GoogleButton.propTypes = {
   isLoading: PropTypes.bool,
   onClick: PropTypes.func.isRequired,
   text: PropTypes.string,
+  showOrDivider: PropTypes.bool,
 };
 
 GoogleButton.defaultProps = {
   isLoading: false,
   text: 'Sign in with Google',
+  showOrDivider: true,
 };
