@@ -325,11 +325,22 @@ export default function DataDashboard() {
 
   const handleDecision = async (id, status) => {
     try {
+      const token = await auth.currentUser?.getIdToken?.();
+      if (!token && !DASHBOARD_DEV_BYPASS) {
+        throw new Error('Login required.');
+      }
+
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/proposals/${id}/status`,
         {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          headers,
           body: JSON.stringify({ status }),
         }
       );
