@@ -141,6 +141,25 @@ const CommentHeaderRow = styled.div`
   font-weight: 600;
 `;
 
+const CommentHeaderLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+`;
+
+const DeleteCommentButton = styled.button`
+  border: none;
+  background: none;
+  color: #8a8a8a;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover {
+    color: #cb3939;
+  }
+`;
+
 const CommentBody = styled.p`
   margin: 0;
   color: #2e2e2e;
@@ -242,6 +261,7 @@ export default function ProposalModal({
   const [commentsError, setCommentsError] = useState('');
   const [draft, setDraft] = useState('');
   const [posting, setPosting] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     setDraft('');
@@ -263,7 +283,7 @@ export default function ProposalModal({
       try {
         const data = await fetchApi(`/proposals/${proposalId}/comments`);
         if (!cancelled) {
-          setComments(data.comments || []);
+          setComments(data.comments || data.items || []);
         }
       } catch (loadError) {
         if (!cancelled) {
@@ -318,6 +338,23 @@ export default function ProposalModal({
       setCommentsError(postError.message || 'Failed to post comment');
     } finally {
       setPosting(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    if (!commentId || deletingId) {
+      return;
+    }
+
+    setDeletingId(commentId);
+    try {
+      await fetchApi(`/comments/${commentId}`, { method: 'DELETE' });
+      setComments((current) => current.filter((comment) => comment.id !== commentId));
+      setCommentsError('');
+    } catch (deleteError) {
+      setCommentsError(deleteError.message || 'Failed to delete comment');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -377,7 +414,20 @@ export default function ProposalModal({
                   {comments.map((comment) => (
                     <CommentRow key={comment.id}>
                       <CommentHeaderRow>
-                        <span>{comment.author}</span>
+                        <CommentHeaderLeft>
+                          <span>{comment.authorDisplay || comment.author}</span>
+                          {user?.role === 'admin' ? (
+                            <DeleteCommentButton
+                              type='button'
+                              onClick={() => handleDeleteComment(comment.id)}
+                              disabled={deletingId === comment.id}
+                              aria-label='Delete comment'
+                              title='Delete comment'
+                            >
+                              Delete
+                            </DeleteCommentButton>
+                          ) : null}
+                        </CommentHeaderLeft>
                         <span>{formatDate(comment.createdAt)}</span>
                       </CommentHeaderRow>
                       <CommentBody>{comment.body}</CommentBody>

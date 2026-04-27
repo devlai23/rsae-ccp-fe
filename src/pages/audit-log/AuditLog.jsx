@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import AuditLogEntry from '@/common/components/cards/AuditLogEntry';
+import { auth } from '@/firebase-config';
 import styled from 'styled-components';
 
 // --- STYLED COMPONENTS ---
@@ -54,62 +55,158 @@ const LogContainer = styled.div`
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.03);
 `;
 
-// --- DUMMY DATA ---
+const StateText = styled.div`
+  margin-top: 1.2rem;
+  border: 1px dashed #d6d6d6;
+  border-radius: 16px;
+  background-color: #fbfbfb;
+  padding: 1.2rem 1.5rem;
+  color: ${(props) => (props.$error ? '#c83f3f' : '#777')};
+`;
 
-const dummyLogs = [
-  {
-    id: 1,
-    user: 'Admin User 1',
-    action: 'Logged Out',
-    timestamp: 'Today at 12:34 PM',
-  },
-  {
-    id: 2,
-    user: 'Admin User 1',
-    action: 'Approved Proposal #842',
-    timestamp: 'Today at 11:15 AM',
-  },
-  {
-    id: 3,
-    user: 'Admin User 2',
-    action: 'Logged In',
-    timestamp: 'Yesterday at 4:30 PM',
-  },
-  {
-    id: 4,
-    user: 'Admin User 1',
-    action: 'Deleted Comment',
-    timestamp: 'Yesterday at 2:00 PM',
-  },
-  {
-    id: 5,
-    user: 'System',
-    action: 'Weekly Backup Completed',
-    timestamp: 'Sunday at 12:00 AM',
-  },
-];
+const buildApiUrl = (path) => {
+  const base = import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '');
+  if (!base) {
+    throw new Error('Missing VITE_BACKEND_URL in frontend env.');
+  }
+  return `${base}${path}`;
+};
+
+const toIsoDate = (value) => value.toISOString().slice(0, 10);
+
+const computeDateRange = (preset) => {
+  if (!preset) return { from: '', to: '' };
+  const now = new Date();
+
+  if (preset === 'today') {
+    return { from: toIsoDate(now), to: toIsoDate(now) };
+  }
+
+  if (preset === 'week') {
+    const start = new Date(now);
+    start.setDate(now.getDate() - 7);
+    return { from: toIsoDate(start), to: toIsoDate(now) };
+  }
+
+  if (preset === 'month') {
+    const start = new Date(now);
+    start.setMonth(now.getMonth() - 1);
+    return { from: toIsoDate(start), to: toIsoDate(now) };
+  }
+
+  return { from: '', to: '' };
+};
+
+const formatTimestamp = (value) =>
+  new Date(value).toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+const humanizeAction = (log) => {
+  const id = log.entityId ? ` #${log.entityId}` : '';
+  switch (log.actionType) {
+    case 'auth.login':
+      return 'Logged In';
+    case 'auth.logout':
+      return 'Logged Out';
+    case 'proposal.approve':
+      return `Approved Proposal${id}`;
+    case 'proposal.reject':
+      return `Rejected Proposal${id}`;
+    case 'comment.delete':
+      return `Deleted Comment${id}`;
+    default:
+      return log.actionType;
+  }
+};
 
 // --- MAIN PAGE RENDER ---
 
 export default function AuditLog() {
+  const [category, setCategory] = useState('');
+  const [datePreset, setDatePreset] = useState('');
+  const [{ from, to }, setRange] = useState({ from: '', to: '' });
+
+  const [items, setItems] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    setRange(computeDateRange(datePreset));
+  }, [datePreset]);
+
+  const queryString = useMemo(() => {
+    const params = new URLSearchParams();
+    if (category) params.set('category', category);
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
+    return params.toString() ? `?${params.toString()}` : '';
+  }, [category, from, to]);
+
+  useEffect(() => {
+    const load = async () => {
+      setIsLoading(true);
+      setError('');
+      try {
+        const token = await auth.currentUser?.getIdToken?.();
+        const headers = {};
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+
+        const response = await fetch(buildApiUrl(`/audit-logs${queryString}`), {
+          credentials: 'include',
+          headers,
+        });
+
+        if (!response.ok) {
+          const body = await response.json().catch(() => null);
+          throw new Error(body?.error || `Request failed (${response.status})`);
+        }
+
+        const data = await response.json();
+        setItems(data.items || []);
+      } catch (loadError) {
+        setItems([]);
+        setError(loadError.message || 'Failed to load audit logs');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    load();
+  }, [queryString]);
+
   return (
     <PageContainer>
       <HeaderRow>
         <Title>Admin Audit Log</Title>
         <FilterGroup>
-          <StyledSelect defaultValue=''>
+          <StyledSelect
+            value={category}
+            onChange={(event) => setCategory(event.target.value)}
+          >
             <option value='' disabled>
               Filter By Category
             </option>
-            <option value='login'>Logins/Logouts</option>
+            <option value=''>All</option>
+            <option value='auth'>Logins/Logouts</option>
             <option value='proposal'>Proposals</option>
             <option value='comment'>Comments</option>
           </StyledSelect>
 
-          <StyledSelect defaultValue=''>
+          <StyledSelect
+            value={datePreset}
+            onChange={(event) => setDatePreset(event.target.value)}
+          >
             <option value='' disabled>
               Filter By Date
             </option>
+            <option value=''>All</option>
             <option value='today'>Today</option>
             <option value='week'>This Week</option>
             <option value='month'>This Month</option>
@@ -118,14 +215,23 @@ export default function AuditLog() {
       </HeaderRow>
 
       <LogContainer>
-        {dummyLogs.map((log) => (
-          <AuditLogEntry
-            key={log.id}
-            user={log.user}
-            action={log.action}
-            timestamp={log.timestamp}
-          />
-        ))}
+        {isLoading ? <StateText>Loading audit logs...</StateText> : null}
+        {!isLoading && error ? <StateText $error>{error}</StateText> : null}
+
+        {!isLoading && !error && !items.length ? (
+          <StateText>No audit log entries match your filters.</StateText>
+        ) : null}
+
+        {!isLoading && !error
+          ? items.map((log) => (
+              <AuditLogEntry
+                key={log.id}
+                user={log.actorEmail || log.actorUid || 'System'}
+                action={humanizeAction(log)}
+                timestamp={formatTimestamp(log.createdAt)}
+              />
+            ))
+          : null}
       </LogContainer>
     </PageContainer>
   );
