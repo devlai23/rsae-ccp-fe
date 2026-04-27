@@ -159,7 +159,7 @@ export default function SiteFooter() {
           <LoginIcon src={loginIcon} alt='' aria-hidden='true' />
         </FooterLogoutButton>
       ) : (
-        <FooterLoginLink to='/signup'>
+        <FooterLoginLink to='/login'>
           <span>RSAE</span> Admin Login
           <LoginIcon src={loginIcon} alt='' aria-hidden='true' />
         </FooterLoginLink>
