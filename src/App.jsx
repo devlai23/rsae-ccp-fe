@@ -17,6 +17,7 @@ import DataDashboard from '@/pages/dashboard/DataDashboard';
 import Home from '@/pages/home/Home';
 import NotFound from '@/pages/not-found/NotFound';
 import SubmissionForm from '@/pages/submit/SubmissionForm';
+import ScrollTop from '@/common/components/utils/ScrollTop';
 
 import './App.css';
 
@@ -24,34 +25,35 @@ export default function App() {
   return (
     <UserProvider>
       <BrowserRouter>
-        <Routes>
-          <Route path='/' element={<NavLayout />}>
-            {/* STANDARD ROUTES */}
-            <Route index element={<Home />} />
-            <Route path='browse' element={<BrowseIdeas />} />
-            <Route path='submit' element={<SubmissionForm />} />
+        <ScrollTop />
+          <Routes>
+            <Route path='/' element={<NavLayout />}>
+              {/* STANDARD ROUTES */}
+              <Route index element={<Home />} />
+              <Route path='browse' element={<BrowseIdeas />} />
+              <Route path='submit' element={<SubmissionForm />} />
 
-            {/* PROTECTED ROUTES */}
-            <Route element={<PrivateRoute />}>
-              <Route path='dashboard' element={<DataDashboard />} />
-              <Route path='audit-log' element={<AuditLog />} />
+              {/* PROTECTED ROUTES */}
+              <Route element={<PrivateRoute />}>
+                <Route path='dashboard' element={<DataDashboard />} />
+                <Route path='audit-log' element={<AuditLog />} />
+              </Route>
+
+              {/* PUBLIC ONLY ROUTES */}
+              <Route element={<PublicOnlyRoute />}>
+                <Route path='login' element={<Login />} />
+                <Route path='signup' element={<SignUp />} />
+                <Route
+                  path='forgot-password'
+                  element={<RequestPasswordReset />}
+                />
+              </Route>
+
+              <Route path='auth/callback' element={<AuthCallback />} />
+              <Route path='auth/reset-password' element={<ResetPassword />} />
+              <Route path='*' element={<NotFound />} />
             </Route>
-
-            {/* PUBLIC ONLY ROUTES */}
-            <Route element={<PublicOnlyRoute />}>
-              <Route path='login' element={<Login />} />
-              <Route path='signup' element={<SignUp />} />
-              <Route
-                path='forgot-password'
-                element={<RequestPasswordReset />}
-              />
-            </Route>
-
-            <Route path='auth/callback' element={<AuthCallback />} />
-            <Route path='auth/reset-password' element={<ResetPassword />} />
-            <Route path='*' element={<NotFound />} />
-          </Route>
-        </Routes>
+          </Routes>
       </BrowserRouter>
     </UserProvider>
   );
