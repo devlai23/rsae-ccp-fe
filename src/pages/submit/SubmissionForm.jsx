@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
 import ProposalSubmitButton from '@/common/components/buttons/ProposalSubmitButton';
+import { auth } from '@/firebase-config';
 import styled from 'styled-components';
 
 const buildApiUrl = (path) => {
@@ -228,6 +229,11 @@ export default function SubmissionForm() {
     }
 
     try {
+      const token = await auth.currentUser?.getIdToken?.();
+      if (!token) {
+        throw new Error('Please log in before submitting a proposal.');
+      }
+
       const payload = {
         title: `Proposal by ${formData.fullName}`,
         category: formData.category,
@@ -239,8 +245,10 @@ export default function SubmissionForm() {
       const response = await fetch(proposalsUrl, {
         method: 'POST',
         headers: {
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(payload),
       });
 
