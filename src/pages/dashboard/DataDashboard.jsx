@@ -341,6 +341,19 @@ export default function DataDashboard() {
           proposal.id === id ? { ...proposal, status } : proposal
         )
       );
+
+      const [metricsResult, categoriesResult] = await Promise.allSettled([
+        fetchDashboardJson('/dashboard/metrics'),
+        fetchDashboardJson('/dashboard/categories'),
+      ]);
+
+      if (metricsResult.status === 'fulfilled') {
+        setCards(metricsResult.value.cards || []);
+      }
+      if (categoriesResult.status === 'fulfilled') {
+        setCategories(categoriesResult.value.categories || []);
+      }
+
     } catch (error) {
       alert('Failed to update proposal status: ' + (error.message || error));
     }
