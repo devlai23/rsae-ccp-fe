@@ -26,7 +26,9 @@ const HeaderContainer = styled.header`
   }
 `;
 
-const LogoContainer = styled(Link)`
+const RSAE_ORG_URL = 'https://rsaevanston.org/';
+
+const LogoContainer = styled.a`
   display: flex;
   align-items: center;
   text-decoration: none;
@@ -100,7 +102,7 @@ export default function UserHeader() {
 
   return (
     <HeaderContainer>
-      <LogoContainer to='/'>
+      <LogoContainer href={RSAE_ORG_URL}>
         <LogoImage
           src={rsaeLogo}
           alt='Reparations Stakeholders Authority Evanston Logo'
