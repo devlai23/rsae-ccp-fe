@@ -6,6 +6,7 @@ import { useUser } from '@/common/contexts/UserContext';
 import styled from 'styled-components';
 
 import LogoutModal from './LogoutModal';
+import toast from 'react-hot-toast';
 
 // --- STYLED COMPONENTS ---
 
@@ -178,9 +179,15 @@ export default function AdminHeader() {
     try {
       await logout();
       setIsModalOpen(false);
+
+      toast.success('Log Out Successful');
+      window.scrollTo({top: 0, behavior: 'smooth'});
+
       navigate('/', { replace: true });
     } catch (error) {
       console.error('Logout error:', error);
+
+      toast.error('Log out failed. Please try again.');
     }
   };
 

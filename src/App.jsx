@@ -5,6 +5,7 @@ import {
   PublicOnlyRoute,
 } from '@/common/components/routes/ProtectedRoutes';
 import { UserProvider } from '@/common/contexts/UserContext';
+import { Toaster } from 'react-hot-toast';
 import NavLayout from '@/common/layouts/NavLayout';
 import AuthCallback from '@/pages/account/AuthCallback';
 import Login from '@/pages/account/Login';
@@ -25,6 +26,16 @@ export default function App() {
   return (
     <UserProvider>
       <BrowserRouter>
+        <Toaster 
+          position="top-center"
+          toastOptions={{
+            style: {
+              background: '#333',
+              color: '#fff',
+              borderRadius: '10px',
+            },
+          }} 
+        />
         <ScrollTop />
           <Routes>
             <Route path='/' element={<NavLayout />}>

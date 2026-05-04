@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import footerLogo from '@/assets/footer_logo.png';
 import loginIcon from '@/assets/login_icon.png';
 import { useUser } from '@/common/contexts/UserContext';
 import styled from 'styled-components';
+
+import LogoutModal from '@/common/components/navigation/LogoutModal';
+import toast from 'react-hot-toast';
 
 const FooterSection = styled.footer`
   background-color: #f2f2f2;
@@ -106,15 +109,31 @@ const LoginIcon = styled.img`
 `;
 
 export default function SiteFooter() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { user, logout } = useUser();
   const navigate = useNavigate();
 
-  const handleFooterLogout = async () => {
+  const handleLogoutClick = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleLogoutConfirm = async () => {
     try {
       await logout();
+      setIsModalOpen(false);
+      
+      toast.success('Log Out Successful');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
       navigate('/', { replace: true });
     } catch (error) {
       console.error('Logout error:', error);
+
+      toast.error('Log out fauled. Please try again.');
     }
   };
 
@@ -154,7 +173,7 @@ export default function SiteFooter() {
       </FooterInfoGrid>
 
       {user ? (
-        <FooterLogoutButton type='button' onClick={handleFooterLogout}>
+        <FooterLogoutButton type='button' onClick={handleLogoutClick}>
           <span>RSAE</span> Admin Logout
           <LoginIcon src={loginIcon} alt='' aria-hidden='true' />
         </FooterLogoutButton>
@@ -164,6 +183,12 @@ export default function SiteFooter() {
           <LoginIcon src={loginIcon} alt='' aria-hidden='true' />
         </FooterLoginLink>
       )}
+
+      <LogoutModal
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        onLogout={handleLogoutConfirm}
+      />
     </FooterSection>
   );
 }
