@@ -1,6 +1,9 @@
 import { useContext, useEffect, useState } from 'react';
 
 import { UserContext } from '@/common/contexts/UserContext';
+
+const DASHBOARD_DEV_BYPASS =
+  import.meta.env.VITE_DASHBOARD_DEV_BYPASS === 'true';
 import { auth } from '@/firebase-config';
 import styled from 'styled-components';
 
@@ -254,6 +257,7 @@ export default function ProposalModal({
   onClose,
 }) {
   const { user } = useContext(UserContext);
+  const isAdmin = user?.role === 'admin' || DASHBOARD_DEV_BYPASS;
   const proposalId = proposalData?.id ?? null;
 
   const [comments, setComments] = useState([]);
@@ -374,7 +378,9 @@ export default function ProposalModal({
               <InfoBadge>Category: {proposalData.category}</InfoBadge>
               <InfoBadge>Status: {proposalData.status}</InfoBadge>
               <InfoBadge>Votes: {proposalData.votes}</InfoBadge>
-              <InfoBadge>Submitted By: {proposalData.submittedBy}</InfoBadge>
+              {isAdmin ? (
+                <InfoBadge>Submitter (internal): {proposalData.submittedBy}</InfoBadge>
+              ) : null}
               <InfoBadge>
                 Submitted: {formatDate(proposalData.submittedAt)}
               </InfoBadge>

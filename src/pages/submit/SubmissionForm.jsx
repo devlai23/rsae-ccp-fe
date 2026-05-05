@@ -164,6 +164,7 @@ export default function SubmissionForm() {
   // state for relation toggles
   const [formData, setFormData] = useState({
     category: '',
+    proposalTitle: '',
     description: '',
     fullName: '',
     email: '',
@@ -193,6 +194,12 @@ export default function SubmissionForm() {
 
     if (!formData.category.trim()) {
       newErrors.category = 'Please choose a category.';
+    }
+
+    if (!formData.proposalTitle.trim()) {
+      newErrors.proposalTitle = 'Please enter a short title for your idea.';
+    } else if (formData.proposalTitle.trim().length < 5) {
+      newErrors.proposalTitle = 'Title must be at least 5 characters.';
     }
 
     if (!formData.description.trim()) {
@@ -229,7 +236,7 @@ export default function SubmissionForm() {
 
     try {
       const payload = {
-        title: `Proposal by ${formData.fullName}`,
+        title: formData.proposalTitle.trim(),
         category: formData.category,
         description: formData.description,
         submittedBy: formData.fullName,
@@ -328,6 +335,19 @@ export default function SubmissionForm() {
             <option value='education'>Education</option>
           </StyledSelect>
           {errors.category && <p>{errors.category}</p>}
+        </FormGroup>
+
+        <FormGroup>
+          <Label>Proposal title</Label>
+          <StyledInput
+            type='text'
+            name='proposalTitle'
+            value={formData.proposalTitle}
+            onChange={handleChange}
+            maxLength={255}
+            placeholder='Short headline for your idea (this is what others will see)'
+          />
+          {errors.proposalTitle && <p>{errors.proposalTitle}</p>}
         </FormGroup>
 
         {/* DESCRIPTION */}

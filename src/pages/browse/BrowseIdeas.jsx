@@ -334,7 +334,7 @@ export default function BrowseIdeas() {
         <Title>{isAdmin ? 'Idea Requests' : 'Browse Ideas'}</Title>
         <SearchInput
           type='text'
-          placeholder='Search title, description, or submitter...'
+          placeholder='Search title or description...'
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />

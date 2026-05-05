@@ -455,7 +455,7 @@ export default function DataDashboard() {
                     <th>Category</th>
                     <th>Description</th>
                     <th>Votes</th>
-                    <th>Submitted By</th>
+                    <th>Submitter (internal)</th>
                     <th>Submitted At</th>
                     <th>Status</th>
                   </tr>
