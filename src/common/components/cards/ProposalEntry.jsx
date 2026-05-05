@@ -97,6 +97,35 @@ const DetailButton = styled.button`
   }
 `;
 
+const SupportButton = styled.button`
+  border: 1px solid #e0d39a;
+  background: #f8ebc3;
+  color: #1a1a1a;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    background: #f4ca25;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const VoteBlock = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+`;
+
 export default function ProposalEntry({
   title,
   category,
@@ -104,6 +133,10 @@ export default function ProposalEntry({
   date,
   votes,
   onCommentClick,
+  onVote,
+  hasVoted = false,
+  voteAllowed = true,
+  isVoting = false,
 }) {
   return (
     <CardContainer>
@@ -114,7 +147,18 @@ export default function ProposalEntry({
             <Title>{title}</Title>
             <CategoryBadge>{category}</CategoryBadge>
           </TitleGroup>
-          <VoteCount>{votes} Votes</VoteCount>
+          <VoteBlock>
+            {voteAllowed && onVote ? (
+              <SupportButton
+                type='button'
+                onClick={onVote}
+                disabled={hasVoted || isVoting}
+              >
+                {hasVoted ? 'Supported' : isVoting ? '…' : 'Support'}
+              </SupportButton>
+            ) : null}
+            <VoteCount>{votes} Votes</VoteCount>
+          </VoteBlock>
         </HeaderRow>
 
         <Description>{description}</Description>

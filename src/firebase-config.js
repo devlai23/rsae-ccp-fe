@@ -17,7 +17,6 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-const dashboardDevBypass = import.meta.env.VITE_DASHBOARD_DEV_BYPASS === 'true';
 const hasRequiredFirebaseConfig =
   !!firebaseConfig.apiKey &&
   !!firebaseConfig.authDomain &&
@@ -32,7 +31,7 @@ if (hasRequiredFirebaseConfig) {
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   googleProvider = new GoogleAuthProvider();
-} else if (!dashboardDevBypass) {
+} else {
   console.warn(
     'Firebase config missing in frontend .env. Auth flows are disabled until VITE_FIREBASE_* values are set.'
   );

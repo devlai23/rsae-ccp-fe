@@ -10,8 +10,6 @@ import {
 } from 'firebase/auth';
 import PropTypes from 'prop-types';
 
-const dashboardDevBypass = import.meta.env.VITE_DASHBOARD_DEV_BYPASS === 'true';
-
 export const UserContext = React.createContext({
   user: null,
   isLoading: false,
@@ -30,20 +28,9 @@ const buildUrl = (endpoint) =>
 
 export function UserProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(!dashboardDevBypass);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (dashboardDevBypass) {
-      setUser({
-        uid: 'dev-admin-uid',
-        email: 'admin@local.dev',
-        role: 'admin',
-        username: 'admin',
-      });
-      setIsLoading(false);
-      return () => {};
-    }
-
     if (!auth?.app) {
       setUser(null);
       setIsLoading(false);
@@ -77,16 +64,6 @@ export function UserProvider({ children }) {
   }, []);
 
   const login = async (email, password) => {
-    if (dashboardDevBypass) {
-      setUser({
-        uid: 'dev-admin-uid',
-        email: email || 'admin@local.dev',
-        role: 'admin',
-        username: 'admin',
-      });
-      return true;
-    }
-
     if (!auth?.app) {
       throw new Error('Firebase is not configured in frontend .env');
     }
@@ -101,11 +78,6 @@ export function UserProvider({ children }) {
   };
 
   const logout = async () => {
-    if (dashboardDevBypass) {
-      setUser(null);
-      return true;
-    }
-
     if (!auth?.app) {
       setUser(null);
       return true;
@@ -122,16 +94,6 @@ export function UserProvider({ children }) {
 
   // Signs in with Google popup and syncs the user to the MySQL backend.
   const googleAuth = async () => {
-    if (dashboardDevBypass) {
-      setUser({
-        uid: 'dev-admin-uid',
-        email: 'admin@local.dev',
-        role: 'admin',
-        username: 'admin',
-      });
-      return true;
-    }
-
     if (!auth?.app || !googleProvider) {
       throw new Error(
         'Firebase Google auth is not configured in frontend .env'
@@ -155,10 +117,6 @@ export function UserProvider({ children }) {
   };
 
   const requestPasswordReset = async (email) => {
-    if (dashboardDevBypass) {
-      return !!email;
-    }
-
     if (!auth?.app) {
       throw new Error('Firebase is not configured in frontend .env');
     }

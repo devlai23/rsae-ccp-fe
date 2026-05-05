@@ -6,9 +6,6 @@ import { UserContext } from '@/common/contexts/UserContext';
 import { auth } from '@/firebase-config';
 import styled from 'styled-components';
 
-const DASHBOARD_DEV_BYPASS =
-  import.meta.env.VITE_DASHBOARD_DEV_BYPASS === 'true';
-
 const PageContainer = styled.div`
   background-color: #f8f8f6;
   min-height: 100vh;
@@ -187,7 +184,7 @@ const buildQueryString = ({ search, category, status, sort, tag }) => {
 
 export default function BrowseIdeas() {
   const { user } = useContext(UserContext);
-  const isAdmin = user?.role === 'admin' || DASHBOARD_DEV_BYPASS;
+  const isAdmin = user?.role === 'admin';
 
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
@@ -204,6 +201,7 @@ export default function BrowseIdeas() {
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState('');
   const [selectedProposal, setSelectedProposal] = useState(null);
+  const [votingProposalId, setVotingProposalId] = useState(null);
 
   const queryString = useMemo(
     () => buildQueryString({ search, category, status, sort, tag: activeTag }),
@@ -310,6 +308,64 @@ export default function BrowseIdeas() {
     setStatus('all');
     setSort('newest');
     setActiveTag('all');
+  };
+
+  const handleVote = async (proposalId, event) => {
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+    if (votingProposalId !== null) {
+      return;
+    }
+
+    setVotingProposalId(proposalId);
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      const token = await auth.currentUser?.getIdToken?.();
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch(buildApiUrl(`/proposals/${proposalId}/vote`), {
+        method: 'POST',
+        credentials: 'include',
+        headers,
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok || response.status === 409) {
+        const nextVotes =
+          typeof data.votes === 'number' ? data.votes : undefined;
+        setProposals((prev) =>
+          prev.map((p) =>
+            p.id === proposalId
+              ? {
+                  ...p,
+                  ...(nextVotes !== undefined ? { votes: nextVotes } : {}),
+                  hasVoted: true,
+                }
+              : p
+          )
+        );
+        setSelectedProposal((prev) =>
+          prev && prev.id === proposalId
+            ? {
+                ...prev,
+                ...(nextVotes !== undefined ? { votes: nextVotes } : {}),
+                hasVoted: true,
+              }
+            : prev
+        );
+      } else if (response.status === 400) {
+        alert(data.error || 'Cannot support this idea yet.');
+      } else if (response.status === 429) {
+        alert(data.error || 'Too many requests. Try again later.');
+      } else {
+        alert(data.error || 'Could not record your support.');
+      }
+    } finally {
+      setVotingProposalId(null);
+    }
   };
 
   const openProposalDetails = async (proposalId) => {
@@ -422,6 +478,10 @@ export default function BrowseIdeas() {
                   description={proposal.description}
                   date={formatDate(proposal.submittedAt)}
                   votes={proposal.votes}
+                  hasVoted={Boolean(proposal.hasVoted)}
+                  voteAllowed={proposal.status === 'approved'}
+                  isVoting={votingProposalId === proposal.id}
+                  onVote={(e) => handleVote(proposal.id, e)}
                   onCommentClick={() => openProposalDetails(proposal.id)}
                 />
               ))
@@ -434,6 +494,12 @@ export default function BrowseIdeas() {
           proposalData={selectedProposal}
           isLoading={modalLoading}
           error={modalError}
+          onSupportClick={
+            selectedProposal
+              ? () => handleVote(selectedProposal.id, null)
+              : undefined
+          }
+          supportVoting={votingProposalId === selectedProposal?.id}
           onClose={() => {
             setIsModalOpen(false);
             setSelectedProposal(null);

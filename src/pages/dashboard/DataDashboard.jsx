@@ -3,9 +3,6 @@ import { useEffect, useState } from 'react';
 import { auth } from '@/firebase-config';
 import styled from 'styled-components';
 
-const DASHBOARD_DEV_BYPASS =
-  import.meta.env.VITE_DASHBOARD_DEV_BYPASS === 'true';
-
 const PageContainer = styled.div`
   background-color: #f8f8f6;
   min-height: calc(100vh - 100px);
@@ -234,7 +231,7 @@ const buildDashboardUrl = (endpoint) => {
 
 async function fetchDashboardJson(endpoint) {
   const token = await auth.currentUser?.getIdToken?.();
-  if (!token && !DASHBOARD_DEV_BYPASS) {
+  if (!token) {
     throw new Error('Admin login required.');
   }
 
@@ -326,7 +323,7 @@ export default function DataDashboard() {
   const handleDecision = async (id, status) => {
     try {
       const token = await auth.currentUser?.getIdToken?.();
-      if (!token && !DASHBOARD_DEV_BYPASS) {
+      if (!token) {
         throw new Error('Login required.');
       }
 
