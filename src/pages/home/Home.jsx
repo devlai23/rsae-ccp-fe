@@ -193,10 +193,6 @@ export default function Home() {
 
     setShowSubmissionToast(true);
 
-    const dismissTimer = setTimeout(() => {
-      setShowSubmissionToast(false);
-    }, 3200);
-
     navigate(
       {
         pathname: location.pathname,
@@ -208,9 +204,19 @@ export default function Home() {
         state: null,
       }
     );
+  }, [location.hash, location.pathname, location.search, location.state, navigate]);
+
+  useEffect(() => {
+    if (!showSubmissionToast) {
+      return undefined;
+    }
+
+    const dismissTimer = setTimeout(() => {
+      setShowSubmissionToast(false);
+    }, 3200);
 
     return () => clearTimeout(dismissTimer);
-  }, [location.hash, location.pathname, location.search, location.state, navigate]);
+  }, [showSubmissionToast]);
 
   return (
     <div>
