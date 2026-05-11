@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import ProposalSubmitButton from '@/common/components/buttons/ProposalSubmitButton';
 import styled from 'styled-components';
@@ -158,9 +159,18 @@ const PrivacyNotice = styled.div`
   line-height: 1.5;
 `;
 
+const ErrorText = styled.p`
+  margin-top: 1rem;
+  color: #b53737;
+  font-weight: 600;
+  text-align: center;
+`;
+
 // --- COMPONENT RENDER ---
 
 export default function SubmissionForm() {
+  const navigate = useNavigate();
+
   // state for relation toggles
   const [formData, setFormData] = useState({
     category: '',
@@ -172,7 +182,6 @@ export default function SubmissionForm() {
   });
 
   const [errors, setErrors] = useState({});
-  const [success, setSuccess] = useState('');
   //const[isSubmitting, setIsSubmitting] = useState(false);
 
   function handleChange(event) {
@@ -230,7 +239,6 @@ export default function SubmissionForm() {
 
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
-      setSuccess('');
       return;
     }
 
@@ -276,15 +284,18 @@ export default function SubmissionForm() {
       // #endregion
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to submit proposal');
       }
 
       const result = await response.json();
       console.log('Successfully saved to backend:', result);
 
-      setSuccess('Proposal submitted successfully!');
       setErrors({});
+      navigate('/', {
+        replace: true,
+        state: { submissionSuccessToast: true },
+      });
     } catch (error) {
       console.error('Submission error:', error);
       // #region agent log
@@ -308,7 +319,6 @@ export default function SubmissionForm() {
       setErrors({
         submit: error.message || 'An error occurred while submitting.',
       });
-      setSuccess('');
     }
   }
 
@@ -459,7 +469,7 @@ export default function SubmissionForm() {
             Submit Proposal
           </ProposalSubmitButton>
         </div>
-        {success && <p>{success}</p>}
+        {errors.submit ? <ErrorText>{errors.submit}</ErrorText> : null}
       </FormContainer>
     </PageWrapper>
   );

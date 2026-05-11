@@ -1,5 +1,5 @@
-import React, { useContext } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useContext, useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 // 1. IMPORT YOUR COMPONENTS & ASSETS
 import heroBg from '@/assets/hero-bg.jpg';
@@ -143,14 +143,94 @@ const Divider = styled.div`
   opacity: 0.2;
 `;
 
+const ToastContainer = styled.div`
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 1100;
+  pointer-events: none;
+`;
+
+const Toast = styled.div`
+  width: min(360px, calc(100vw - 2.5rem));
+  max-width: 360px;
+  background-color: #ffffff;
+  border: 1px solid #e2b853;
+  border-left: 6px solid #e2b853;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.16);
+  padding: 0.9rem 1rem;
+  pointer-events: auto;
+`;
+
+const ToastTitle = styled.p`
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1f1f1f;
+`;
+
+const ToastBody = styled.p`
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.4;
+  color: #4d4d4d;
+`;
+
 // --- MAIN COMPONENT RENDER ---
 
 export default function Home() {
   const context = useContext(UserContext);
   const isAdmin = context?.user?.role === 'admin';
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [showSubmissionToast, setShowSubmissionToast] = useState(false);
+
+  useEffect(() => {
+    if (!location.state?.submissionSuccessToast) {
+      return undefined;
+    }
+
+    setShowSubmissionToast(true);
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: location.search,
+        hash: location.hash,
+      },
+      {
+        replace: true,
+        state: null,
+      }
+    );
+  }, [location.hash, location.pathname, location.search, location.state, navigate]);
+
+  useEffect(() => {
+    if (!showSubmissionToast) {
+      return undefined;
+    }
+
+    const dismissTimer = setTimeout(() => {
+      setShowSubmissionToast(false);
+    }, 3200);
+
+    return () => clearTimeout(dismissTimer);
+  }, [showSubmissionToast]);
 
   return (
     <div>
+      {showSubmissionToast ? (
+        <ToastContainer aria-live='polite'>
+          <Toast role='status'>
+            <ToastTitle>Proposal submitted</ToastTitle>
+            <ToastBody>
+              Thanks for sharing your idea. The team will review it shortly.
+            </ToastBody>
+          </Toast>
+        </ToastContainer>
+      ) : null}
+
       {/* HERO SECTION */}
       <HeroContainer>
         <TopSubtitle>For our local community, Evanston</TopSubtitle>
