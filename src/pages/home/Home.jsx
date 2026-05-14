@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 // 1. IMPORT YOUR COMPONENTS & ASSETS
@@ -154,13 +154,48 @@ const ToastContainer = styled.div`
 const Toast = styled.div`
   width: min(360px, calc(100vw - 2.5rem));
   max-width: 360px;
+  position: relative;
   background-color: #ffffff;
   border: 1px solid #e2b853;
   border-left: 6px solid #e2b853;
   border-radius: 12px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.16);
-  padding: 0.9rem 1rem;
+  padding: 0.9rem 2.4rem 0.9rem 1rem;
   pointer-events: auto;
+  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+  transform: translateY(${({ $visible }) => ($visible ? '0' : '-0.5rem')});
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease;
+  will-change: opacity, transform;
+`;
+
+const ToastCloseButton = styled.button`
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  width: 1.7rem;
+  height: 1.7rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #6f6f6f;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  line-height: 1;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: #1f1f1f;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #e2b853;
+    outline-offset: 2px;
+  }
 `;
 
 const ToastTitle = styled.p`
@@ -184,14 +219,30 @@ export default function Home() {
   const isAdmin = context?.user?.role === 'admin';
   const location = useLocation();
   const navigate = useNavigate();
-  const [showSubmissionToast, setShowSubmissionToast] = useState(false);
+  const [showSubmissionToast, setShowSubmissionToast] = useState(() =>
+    Boolean(location.state?.submissionSuccessToast)
+  );
+  const [isSubmissionToastVisible, setIsSubmissionToastVisible] = useState(() =>
+    Boolean(location.state?.submissionSuccessToast)
+  );
+  const autoDismissTimerRef = useRef(null);
+  const hideTimerRef = useRef(null);
+
+  const dismissSubmissionToast = () => {
+    window.clearTimeout(autoDismissTimerRef.current);
+    window.clearTimeout(hideTimerRef.current);
+
+    setIsSubmissionToastVisible(false);
+
+    hideTimerRef.current = window.setTimeout(() => {
+      setShowSubmissionToast(false);
+    }, 220);
+  };
 
   useEffect(() => {
     if (!location.state?.submissionSuccessToast) {
       return undefined;
     }
-
-    setShowSubmissionToast(true);
 
     navigate(
       {
@@ -211,18 +262,36 @@ export default function Home() {
       return undefined;
     }
 
-    const dismissTimer = setTimeout(() => {
-      setShowSubmissionToast(false);
+    autoDismissTimerRef.current = window.setTimeout(() => {
+      dismissSubmissionToast();
     }, 3200);
 
-    return () => clearTimeout(dismissTimer);
+    return () => {
+      window.clearTimeout(autoDismissTimerRef.current);
+    };
   }, [showSubmissionToast]);
+
+  useEffect(
+    () => () => {
+      window.clearTimeout(autoDismissTimerRef.current);
+      window.clearTimeout(hideTimerRef.current);
+    },
+    []
+  );
 
   return (
     <div>
       {showSubmissionToast ? (
         <ToastContainer aria-live='polite'>
-          <Toast role='status'>
+          <Toast role='status' $visible={isSubmissionToastVisible}>
+            <ToastCloseButton
+              type='button'
+              onClick={dismissSubmissionToast}
+              aria-label='Dismiss proposal submitted notification'
+              title='Dismiss'
+            >
+              x
+            </ToastCloseButton>
             <ToastTitle>Proposal submitted</ToastTitle>
             <ToastBody>
               Thanks for sharing your idea. The team will review it shortly.
