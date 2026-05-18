@@ -404,9 +404,7 @@ export default function ProposalModal({
                     e.stopPropagation();
                     onSupportClick();
                   }}
-                  disabled={
-                    Boolean(proposalData.hasVoted) || supportVoting
-                  }
+                  disabled={supportVoting}
                 >
                   {proposalData.hasVoted
                     ? 'Supported'
