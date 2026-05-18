@@ -152,7 +152,7 @@ export default function ProposalEntry({
               <SupportButton
                 type='button'
                 onClick={onVote}
-                disabled={hasVoted || isVoting}
+                disabled={isVoting}
               >
                 {hasVoted ? 'Supported' : isVoting ? '…' : 'Support'}
               </SupportButton>

@@ -333,16 +333,17 @@ export default function BrowseIdeas() {
 
       const data = await response.json().catch(() => ({}));
 
-      if (response.ok || response.status === 409) {
+      if (response.ok) {
         const nextVotes =
           typeof data.votes === 'number' ? data.votes : undefined;
+        const nextHasVoted = Boolean(data.hasVoted);
         setProposals((prev) =>
           prev.map((p) =>
             p.id === proposalId
               ? {
                   ...p,
                   ...(nextVotes !== undefined ? { votes: nextVotes } : {}),
-                  hasVoted: true,
+                  hasVoted: nextHasVoted,
                 }
               : p
           )
@@ -352,7 +353,7 @@ export default function BrowseIdeas() {
             ? {
                 ...prev,
                 ...(nextVotes !== undefined ? { votes: nextVotes } : {}),
-                hasVoted: true,
+                hasVoted: nextHasVoted,
               }
             : prev
         );
