@@ -82,17 +82,17 @@ export default function HowItWorks() {
     {
       num: '02',
       title: 'Review',
-      text: 'Share your idea for the neighbourhood through a basic form',
+      text: 'RSAE admin reviews submissions against community guidelines before they go live for voting.',
     },
     {
       num: '03',
       title: 'Browse',
-      text: 'Share your idea for the neighbourhood through a basic form',
+      text: 'Explore ideas from other community members and vote for the projects you support',
     },
     {
       num: '04',
       title: 'Update',
-      text: 'Share your idea for the neighbourhood through a basic form',
+      text: 'View live, transparent voting results for approved ideas.',
     },
   ];
 
