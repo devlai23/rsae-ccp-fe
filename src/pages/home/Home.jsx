@@ -225,6 +225,7 @@ export default function Home() {
   const isAdmin = context?.user?.role === 'admin';
   const location = useLocation();
   const navigate = useNavigate();
+  const [approvedSubmissions, setApprovedSubmissions] = useState(0);
   const [showSubmissionToast, setShowSubmissionToast] = useState(() =>
     Boolean(location.state?.submissionSuccessToast)
   );
@@ -285,6 +286,65 @@ export default function Home() {
     []
   );
 
+  useEffect(() => {
+    const controller = new AbortController();
+    const base = import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '');
+
+    const fetchJson = async (path) => {
+      if (!base) {
+        throw new Error('Missing VITE_BACKEND_URL in frontend env.');
+      }
+
+      const response = await fetch(`${base}${path}`, {
+        credentials: 'include',
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Request failed (${response.status})`);
+      }
+
+      return response.json();
+    };
+
+    const loadPublicMetrics = async () => {
+      try {
+        const metrics = await fetchJson('/dashboard/public-metrics');
+        setApprovedSubmissions(metrics.approvedSubmissions || 0);
+      } catch (error) {
+        if (error.name === 'AbortError') {
+          return;
+        }
+
+        console.warn(
+          'Homepage metrics endpoint failed, falling back to /proposals count:',
+          error
+        );
+
+        try {
+          const proposals = await fetchJson('/proposals');
+          setApprovedSubmissions(
+            proposals.items?.filter((proposal) => proposal.status === 'approved')
+              .length || 0
+          );
+        } catch (fallbackError) {
+          if (fallbackError.name !== 'AbortError') {
+            console.error(
+              'Failed to load homepage submissions from both metrics and proposals endpoints:',
+              fallbackError
+            );
+          }
+        }
+      }
+    };
+
+    loadPublicMetrics();
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
   return (
     <div>
       {showSubmissionToast ? (
@@ -332,14 +392,14 @@ export default function Home() {
       {/* STATS BAR SECTION */}
       <StatsBar>
         <StatMainInfo>
-          <StatTitle>Idea Collection in Progress...</StatTitle>
+          <StatTitle>Idea collection in progress...</StatTitle>
           <StatSubtitle>Collaborating for a better Evanston.</StatSubtitle>
         </StatMainInfo>
 
         <StatsMetrics>
           <StatBlock>
-            <StatNumber>842</StatNumber>
-            <StatLabel>Submissions</StatLabel>
+            <StatNumber>{approvedSubmissions}</StatNumber>
+            <StatLabel>Approved Submissions</StatLabel>
           </StatBlock>
 
           <Divider />
