@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
 
+import { buildBackendUrl } from '@/common/lib/apiUrl';
 import { UserContext } from '@/common/contexts/UserContext';
 import { auth } from '@/firebase-config';
 import styled from 'styled-components';
@@ -62,8 +63,8 @@ const InfoBadge = styled.span`
 `;
 
 const SupportButton = styled.button`
-  border: 1px solid #e0d39a;
-  background: #f8ebc3;
+  border: 1px solid ${(props) => (props.$active ? '#d7a600' : '#e0d39a')};
+  background: ${(props) => (props.$active ? '#f4ca25' : '#f8ebc3')};
   color: #1a1a1a;
   font-size: 0.85rem;
   font-weight: 600;
@@ -238,14 +239,6 @@ const formatDate = (value) =>
     day: 'numeric',
   });
 
-const buildApiUrl = (path) => {
-  const base = import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '');
-  if (!base) {
-    throw new Error('Missing VITE_BACKEND_URL in frontend env.');
-  }
-  return `${base}${path}`;
-};
-
 async function fetchApi(path, init = {}) {
   const token = await auth.currentUser?.getIdToken?.();
   const headers = { ...(init.headers || {}) };
@@ -253,7 +246,7 @@ async function fetchApi(path, init = {}) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(buildApiUrl(path), {
+  const response = await fetch(buildBackendUrl(path), {
     ...init,
     credentials: 'include',
     headers,
@@ -400,16 +393,17 @@ export default function ProposalModal({
               {proposalData.status === 'approved' && onSupportClick ? (
                 <SupportButton
                   type='button'
+                  $active={proposalData.hasVoted}
                   onClick={(e) => {
                     e.stopPropagation();
                     onSupportClick();
                   }}
                   disabled={supportVoting}
                 >
-                  {proposalData.hasVoted
-                    ? 'Supported'
-                    : supportVoting
-                      ? '…'
+                  {supportVoting
+                    ? '…'
+                    : proposalData.hasVoted
+                      ? 'Supported'
                       : 'Support'}
                 </SupportButton>
               ) : null}

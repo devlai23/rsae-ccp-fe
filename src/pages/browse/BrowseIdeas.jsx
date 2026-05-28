@@ -2,6 +2,11 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 
 import ProposalEntry from '@/common/components/cards/ProposalEntry';
 import ProposalModal from '@/common/components/modals/ProposalModal';
+import { buildBackendUrl } from '@/common/lib/apiUrl';
+import {
+  appendVoterIdToPath,
+  getBrowserVoterId,
+} from '@/common/lib/voterId';
 import { UserContext } from '@/common/contexts/UserContext';
 import { auth } from '@/firebase-config';
 import styled from 'styled-components';
@@ -124,14 +129,6 @@ const StateBox = styled.div`
   padding: 1rem;
 `;
 
-const buildApiUrl = (path) => {
-  const base = import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '');
-  if (!base) {
-    throw new Error('Missing VITE_BACKEND_URL in frontend env.');
-  }
-  return `${base}${path}`;
-};
-
 const formatDate = (value) =>
   new Date(value).toLocaleDateString(undefined, {
     month: 'short',
@@ -146,7 +143,7 @@ async function fetchApi(path) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(buildApiUrl(path), {
+  const response = await fetch(buildBackendUrl(appendVoterIdToPath(path)), {
     credentials: 'include',
     headers,
   });
@@ -157,6 +154,25 @@ async function fetchApi(path) {
   }
 
   return response.json();
+}
+
+async function postVote(path, token) {
+  const baseHeaders = { 'Content-Type': 'application/json' };
+  if (token) {
+    baseHeaders.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(buildBackendUrl(path), {
+        method: 'POST',
+        credentials: 'include',
+        headers: baseHeaders,
+    body: JSON.stringify({
+      voterId: getBrowserVoterId(),
+    }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  return { response, data };
 }
 
 const buildQueryString = ({ search, category, status, sort, tag }) => {
@@ -319,19 +335,11 @@ export default function BrowseIdeas() {
 
     setVotingProposalId(proposalId);
     try {
-      const headers = { 'Content-Type': 'application/json' };
       const token = await auth.currentUser?.getIdToken?.();
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      const response = await fetch(buildApiUrl(`/proposals/${proposalId}/vote`), {
-        method: 'POST',
-        credentials: 'include',
-        headers,
-      });
-
-      const data = await response.json().catch(() => ({}));
+      const { response, data } = await postVote(
+        `/proposals/${proposalId}/vote`,
+        token
+      );
 
       if (response.ok) {
         const nextVotes =
@@ -364,6 +372,8 @@ export default function BrowseIdeas() {
       } else {
         alert(data.error || 'Could not record your support.');
       }
+    } catch (error) {
+      alert(error?.message || 'Could not record your support.');
     } finally {
       setVotingProposalId(null);
     }
