@@ -129,6 +129,42 @@ const StateBox = styled.div`
   padding: 1rem;
 `;
 
+const PaginationControls = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #eeeeee;
+`;
+
+const PageButton = styled.button`
+  background-color: #ffffff;
+  border: 1px solid #dfdfdf;
+  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    border-color: #d1a90c;
+    color: #d1a90c;
+  }
+
+  &:disabled {
+    background-color: #f9f9f9;
+    color: #c4c4c4;
+    cursor: not-allowed;
+  }
+`;
+
+const PageInfo = styled.span`
+  font-weight: 500;
+  color: #777;
+`;
+
 const formatDate = (value) =>
   new Date(value).toLocaleDateString(undefined, {
     month: 'short',
@@ -198,6 +234,8 @@ const buildQueryString = ({ search, category, status, sort, tag }) => {
   return query ? `?${query}` : '';
 };
 
+const ITEMS_PER_PAGE = 10;
+
 export default function BrowseIdeas() {
   const { user } = useContext(UserContext);
   const isAdmin = user?.role === 'admin';
@@ -218,6 +256,7 @@ export default function BrowseIdeas() {
   const [modalError, setModalError] = useState('');
   const [selectedProposal, setSelectedProposal] = useState(null);
   const [votingProposalId, setVotingProposalId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const queryString = useMemo(
     () => buildQueryString({ search, category, status, sort, tag: activeTag }),
@@ -230,6 +269,13 @@ export default function BrowseIdeas() {
     }
     return proposals.filter((proposal) => proposal.status === 'approved');
   }, [proposals, isAdmin]);
+
+  const totalPages = Math.ceil(visibleProposals.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const currentItems = visibleProposals.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE
+  );
 
   useEffect(() => {
     const loadTags = async () => {
@@ -252,6 +298,7 @@ export default function BrowseIdeas() {
         const data = await fetchApi(`/proposals${queryString}`);
         const items = data.items || [];
         setProposals(items);
+        setCurrentPage(1);
         // #region agent log
         const statusCounts = items.reduce((acc, proposalItem) => {
           const key = proposalItem.status ?? 'unknown';
@@ -324,6 +371,7 @@ export default function BrowseIdeas() {
     setStatus('all');
     setSort('newest');
     setActiveTag('all');
+    setCurrentPage(1);
   };
 
   const handleVote = async (proposalId, event) => {
@@ -476,12 +524,12 @@ export default function BrowseIdeas() {
           {isLoading ? <StateBox>Loading proposals...</StateBox> : null}
           {!isLoading && error ? <StateBox $error>{error}</StateBox> : null}
 
-          {!isLoading && !error && proposals.length === 0 ? (
+          {!isLoading && !error && visibleProposals.length === 0 ? (
             <StateBox>No proposals match your current filters.</StateBox>
           ) : null}
 
           {!isLoading && !error
-            ? visibleProposals.map((proposal) => (
+            ? currentItems.map((proposal) => (
                 <ProposalEntry
                   key={proposal.id}
                   title={proposal.title}
@@ -497,6 +545,32 @@ export default function BrowseIdeas() {
                 />
               ))
             : null}
+
+          {!isLoading && !error && totalPages > 1 ? (
+            <PaginationControls>
+              <PageButton
+                type='button'
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              >
+                Previous
+              </PageButton>
+
+              <PageInfo>
+                Page {currentPage} of {totalPages}
+              </PageInfo>
+
+              <PageButton
+                type='button'
+                disabled={currentPage >= totalPages}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+              >
+                Next
+              </PageButton>
+            </PaginationControls>
+          ) : null}
         </FeedArea>
       </LayoutGrid>
 
