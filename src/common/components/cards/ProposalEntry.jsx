@@ -1,3 +1,4 @@
+import VoteThumbButton from '@/common/components/buttons/VoteThumbButton';
 import styled from 'styled-components';
 
 const CardContainer = styled.div`
@@ -97,27 +98,6 @@ const DetailButton = styled.button`
   }
 `;
 
-const SupportButton = styled.button`
-  border: 1px solid #e0d39a;
-  background: #f8ebc3;
-  color: #1a1a1a;
-  font-size: 0.8rem;
-  font-weight: 600;
-  border-radius: 999px;
-  padding: 0.35rem 0.75rem;
-  cursor: pointer;
-  white-space: nowrap;
-
-  &:hover:not(:disabled) {
-    background: #f4ca25;
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-`;
-
 const VoteBlock = styled.div`
   display: flex;
   align-items: center;
@@ -149,13 +129,11 @@ export default function ProposalEntry({
           </TitleGroup>
           <VoteBlock>
             {voteAllowed && onVote ? (
-              <SupportButton
-                type='button'
+              <VoteThumbButton
+                hasVoted={hasVoted}
+                isVoting={isVoting}
                 onClick={onVote}
-                disabled={isVoting}
-              >
-                {hasVoted ? 'Supported' : isVoting ? '…' : 'Support'}
-              </SupportButton>
+              />
             ) : null}
             <VoteCount>{votes} Votes</VoteCount>
           </VoteBlock>

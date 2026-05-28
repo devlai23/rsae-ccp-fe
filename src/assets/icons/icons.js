@@ -1,5 +1,6 @@
 import eye from './eye.svg?react';
 import eyeClosed from './eyeclosed.svg?react';
+import thumbUp from './thumb_up.svg?react';
 
 /**
  * How to add new icons:
@@ -16,4 +17,5 @@ import eyeClosed from './eyeclosed.svg?react';
 export const Icon = {
   eye,
   eyeClosed,
+  thumbUp,
 };

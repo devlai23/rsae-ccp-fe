@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
 
+import VoteThumbButton from '@/common/components/buttons/VoteThumbButton';
 import { UserContext } from '@/common/contexts/UserContext';
 import { auth } from '@/firebase-config';
 import styled from 'styled-components';
@@ -59,26 +60,6 @@ const InfoBadge = styled.span`
   border-radius: 999px;
   background: #f9f9f9;
   padding: 0.2rem 0.6rem;
-`;
-
-const SupportButton = styled.button`
-  border: 1px solid #e0d39a;
-  background: #f8ebc3;
-  color: #1a1a1a;
-  font-size: 0.85rem;
-  font-weight: 600;
-  border-radius: 999px;
-  padding: 0.25rem 0.75rem;
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    background: #f4ca25;
-  }
-
-  &:disabled {
-    opacity: 0.65;
-    cursor: not-allowed;
-  }
 `;
 
 const DetailBox = styled.div`
@@ -398,20 +379,14 @@ export default function ProposalModal({
               <InfoBadge>Status: {proposalData.status}</InfoBadge>
               <InfoBadge>Votes: {proposalData.votes}</InfoBadge>
               {proposalData.status === 'approved' && onSupportClick ? (
-                <SupportButton
-                  type='button'
+                <VoteThumbButton
+                  hasVoted={proposalData.hasVoted}
+                  isVoting={supportVoting}
                   onClick={(e) => {
                     e.stopPropagation();
                     onSupportClick();
                   }}
-                  disabled={supportVoting}
-                >
-                  {proposalData.hasVoted
-                    ? 'Supported'
-                    : supportVoting
-                      ? '…'
-                      : 'Support'}
-                </SupportButton>
+                />
               ) : null}
               {isAdmin ? (
                 <InfoBadge>Submitter (internal): {proposalData.submittedBy}</InfoBadge>
