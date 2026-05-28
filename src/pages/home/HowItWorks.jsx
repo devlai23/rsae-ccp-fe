@@ -87,7 +87,7 @@ export default function HowItWorks() {
     {
       num: '03',
       title: 'Browse',
-      text: 'Explore ideas from other community members and vote for the projects you support',
+      text: 'Explore ideas from other community members and vote for the projects you support.',
     },
     {
       num: '04',

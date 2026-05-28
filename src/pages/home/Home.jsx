@@ -117,6 +117,12 @@ const StatSubtitle = styled.p`
   font-size: 1rem;
 `;
 
+const StatsMetrics = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+`;
+
 const StatBlock = styled.div`
   display: flex;
   flex-direction: column;
@@ -330,24 +336,19 @@ export default function Home() {
           <StatSubtitle>Collaborating for a better Evanston.</StatSubtitle>
         </StatMainInfo>
 
-        <StatBlock>
-          <StatNumber>842</StatNumber>
-          <StatLabel>Submissions</StatLabel>
-        </StatBlock>
+        <StatsMetrics>
+          <StatBlock>
+            <StatNumber>842</StatNumber>
+            <StatLabel>Submissions</StatLabel>
+          </StatBlock>
 
-        <Divider />
+          <Divider />
 
-        <StatBlock>
-          <StatNumber>10K</StatNumber>
-          <StatLabel>Interactions</StatLabel>
-        </StatBlock>
-
-        <Divider />
-
-        <StatBlock>
-          <StatNumber>HOUSING</StatNumber>
-          <StatLabel>Current Trending Category</StatLabel>
-        </StatBlock>
+          <StatBlock>
+            <StatNumber>HOUSING</StatNumber>
+            <StatLabel>Current Trending Category</StatLabel>
+          </StatBlock>
+        </StatsMetrics>
       </StatsBar>
 
       {/* HOW IT WORKS SECTION */}
