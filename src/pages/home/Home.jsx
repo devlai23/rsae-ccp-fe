@@ -220,12 +220,44 @@ const ToastBody = styled.p`
 
 // --- MAIN COMPONENT RENDER ---
 
+const canonicalizeCategory = (value) => {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return '';
+  }
+
+  const normalized = trimmed.toLowerCase().replace(/&/g, 'and');
+
+  if (normalized.includes('hous')) {
+    return 'Housing';
+  }
+
+  if (normalized.includes('health') || normalized.includes('wellness')) {
+    return 'Health and Wellness';
+  }
+
+  if (normalized.includes('econ')) {
+    return 'Economic Development';
+  }
+
+  if (normalized.includes('art') || normalized.includes('cult')) {
+    return 'Art and Culture';
+  }
+
+  if (normalized.includes('educ')) {
+    return 'Education';
+  }
+
+  return trimmed;
+};
+
 export default function Home() {
   const context = useContext(UserContext);
   const isAdmin = context?.user?.role === 'admin';
   const location = useLocation();
   const navigate = useNavigate();
   const [approvedSubmissions, setApprovedSubmissions] = useState(0);
+  const [trendingCategory, setTrendingCategory] = useState('N/A');
   const [showSubmissionToast, setShowSubmissionToast] = useState(() =>
     Boolean(location.state?.submissionSuccessToast)
   );
@@ -311,6 +343,7 @@ export default function Home() {
       try {
         const metrics = await fetchJson('/dashboard/public-metrics');
         setApprovedSubmissions(metrics.approvedSubmissions || 0);
+        setTrendingCategory(canonicalizeCategory(metrics.trendingCategory) || 'N/A');
       } catch (error) {
         if (error.name === 'AbortError') {
           return;
@@ -327,6 +360,35 @@ export default function Home() {
             proposals.items?.filter((proposal) => proposal.status === 'approved')
               .length || 0
           );
+          const topCategory = (proposals.items || []).reduce(
+            (currentTop, proposal) => {
+              const category = canonicalizeCategory(proposal.category);
+              if (!category) {
+                return currentTop;
+              }
+
+              const nextCounts = {
+                ...currentTop.counts,
+                [category]: (currentTop.counts[category] || 0) + 1,
+              };
+              const nextTopName =
+                nextCounts[category] > currentTop.topCount
+                  ? category
+                  : currentTop.topName;
+              const nextTopCount = Math.max(
+                currentTop.topCount,
+                nextCounts[category]
+              );
+
+              return {
+                counts: nextCounts,
+                topName: nextTopName,
+                topCount: nextTopCount,
+              };
+            },
+            { counts: {}, topName: 'N/A', topCount: 0 }
+          );
+          setTrendingCategory(topCategory.topName);
         } catch (fallbackError) {
           if (fallbackError.name !== 'AbortError') {
             console.error(
@@ -405,7 +467,7 @@ export default function Home() {
           <Divider />
 
           <StatBlock>
-            <StatNumber>HOUSING</StatNumber>
+            <StatNumber>{trendingCategory}</StatNumber>
             <StatLabel>Current Trending Category</StatLabel>
           </StatBlock>
         </StatsMetrics>

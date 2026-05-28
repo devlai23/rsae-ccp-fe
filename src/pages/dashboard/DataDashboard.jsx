@@ -220,6 +220,20 @@ const EmptyState = styled.div`
 `;
 
 const colors = ['#f4ca25', '#e3c45f', '#dbc98e', '#ded7b5', '#ded7b5'];
+const categoryOrder = [
+  'Housing',
+  'Health and Wellness',
+  'Economic Development',
+  'Art and Culture',
+  'Education',
+];
+const categoryIdMap = {
+  Housing: 'housing',
+  'Health and Wellness': 'health-and-wellness',
+  'Economic Development': 'economic-development',
+  'Art and Culture': 'art-and-culture',
+  Education: 'education',
+};
 
 const buildDashboardUrl = (endpoint) => {
   const base = import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '');
@@ -265,6 +279,78 @@ const formatDate = (value) => {
   });
 };
 
+const canonicalizeCategory = (value) => {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return '';
+  }
+
+  const normalized = trimmed.toLowerCase().replace(/&/g, 'and');
+
+  if (normalized.includes('hous')) {
+    return 'Housing';
+  }
+
+  if (normalized.includes('health') || normalized.includes('wellness')) {
+    return 'Health and Wellness';
+  }
+
+  if (normalized.includes('econ')) {
+    return 'Economic Development';
+  }
+
+  if (normalized.includes('art') || normalized.includes('cult')) {
+    return 'Art and Culture';
+  }
+
+  if (normalized.includes('educ')) {
+    return 'Education';
+  }
+
+  return trimmed;
+};
+
+const buildCategoryDistributionFromProposals = (items) => {
+  const counts = new Map(categoryOrder.map((name) => [name, 0]));
+  let totalCount = 0;
+
+  items.forEach((proposal) => {
+    const category = canonicalizeCategory(proposal.category);
+    if (!category) {
+      return;
+    }
+
+    counts.set(category, (counts.get(category) || 0) + 1);
+    totalCount += 1;
+  });
+
+  return categoryOrder.map((name) => ({
+    id: categoryIdMap[name],
+    name,
+    percentage:
+      totalCount > 0 ? Math.round(((counts.get(name) || 0) / totalCount) * 100) : 0,
+  }));
+};
+
+const normalizeCategoryDistribution = (categories) => {
+  const counts = new Map(categoryOrder.map((name) => [name, 0]));
+
+  categories.forEach((category) => {
+    const name = canonicalizeCategory(category.name);
+    if (!name || !counts.has(name)) {
+      return;
+    }
+
+    counts.set(name, (counts.get(name) || 0) + Number(category.percentage || 0));
+  });
+
+  return categoryOrder.map((name) => ({
+    id: categoryIdMap[name],
+    name,
+    percentage: counts.get(name) || 0,
+  }));
+};
+
 export default function DataDashboard() {
   const [cards, setCards] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -297,7 +383,9 @@ export default function DataDashboard() {
       }
 
       if (categoriesResult.status === 'fulfilled') {
-        setCategories(categoriesResult.value.categories || []);
+        setCategories(
+          normalizeCategoryDistribution(categoriesResult.value.categories || [])
+        );
       } else {
         setCategoriesError(
           categoriesResult.reason?.message ||
@@ -306,7 +394,9 @@ export default function DataDashboard() {
       }
 
       if (proposalsResult.status === 'fulfilled') {
-        setProposals(proposalsResult.value.items || []);
+        const nextProposals = proposalsResult.value.items || [];
+        setProposals(nextProposals);
+        setCategories(buildCategoryDistributionFromProposals(nextProposals));
       } else {
         setProposalsError(
           proposalsResult.reason?.message ||
@@ -344,11 +434,10 @@ export default function DataDashboard() {
       if (!response.ok) {
         throw new Error('Failed to update proposal status');
       }
-      setProposals((currentProposals) =>
-        currentProposals.map((proposal) =>
-          proposal.id === id ? { ...proposal, status } : proposal
-        )
+      const refreshedProposals = proposals.map((proposal) =>
+        proposal.id === id ? { ...proposal, status } : proposal
       );
+      setProposals(refreshedProposals);
 
       const [metricsResult, categoriesResult] = await Promise.allSettled([
         fetchDashboardJson('/dashboard/metrics'),
@@ -359,8 +448,11 @@ export default function DataDashboard() {
         setCards(metricsResult.value.cards || []);
       }
       if (categoriesResult.status === 'fulfilled') {
-        setCategories(categoriesResult.value.categories || []);
+        setCategories(
+          normalizeCategoryDistribution(categoriesResult.value.categories || [])
+        );
       }
+      setCategories(buildCategoryDistributionFromProposals(refreshedProposals));
 
     } catch (error) {
       alert('Failed to update proposal status: ' + (error.message || error));

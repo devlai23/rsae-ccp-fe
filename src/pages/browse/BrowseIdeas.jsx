@@ -405,11 +405,11 @@ export default function BrowseIdeas() {
             onChange={(event) => setCategory(event.target.value)}
           >
             <option value='all'>All categories</option>
-            <option value='housing'>Housing</option>
-            <option value='health'>Health & Wellness</option>
-            <option value='economic'>Economic Development</option>
-            <option value='arts'>Arts & Culture</option>
-            <option value='education'>Education</option>
+            <option value='Housing'>Housing</option>
+            <option value='Health and Wellness'>Health & Wellness</option>
+            <option value='Economic Development'>Economic Development</option>
+            <option value='Art and Culture'>Arts & Culture</option>
+            <option value='Education'>Education</option>
           </Dropdown>
 
           <SectionLabel>Sort by</SectionLabel>
