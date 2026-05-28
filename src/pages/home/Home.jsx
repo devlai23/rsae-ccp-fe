@@ -399,7 +399,7 @@ export default function Home() {
         <StatsMetrics>
           <StatBlock>
             <StatNumber>{approvedSubmissions}</StatNumber>
-            <StatLabel>Approved Submissions</StatLabel>
+            <StatLabel>Total Submissions</StatLabel>
           </StatBlock>
 
           <Divider />
