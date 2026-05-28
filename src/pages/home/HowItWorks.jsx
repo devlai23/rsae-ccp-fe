@@ -77,22 +77,22 @@ export default function HowItWorks() {
     {
       num: '01',
       title: 'Submit',
-      text: 'Share your idea for the neighbourhood through a basic form',
+      text: 'Share your idea through a basic form.',
     },
     {
       num: '02',
       title: 'Review',
-      text: 'Share your idea for the neighbourhood through a basic form',
+      text: 'Admins will review submissions before they go live.',
     },
     {
       num: '03',
       title: 'Browse',
-      text: 'Share your idea for the neighbourhood through a basic form',
+      text: 'Explore ideas from other community members and vote for the projects you support',
     },
     {
       num: '04',
       title: 'Update',
-      text: 'Share your idea for the neighbourhood through a basic form',
+      text: 'View live, transparent voting results and leave constructive comments.',
     },
   ];
 
