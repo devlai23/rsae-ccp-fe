@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 
 import VoteThumbButton from '@/common/components/buttons/VoteThumbButton';
+import { buildBackendUrl } from '@/common/lib/apiUrl';
 import { UserContext } from '@/common/contexts/UserContext';
 import { auth } from '@/firebase-config';
 import styled from 'styled-components';
@@ -219,14 +220,6 @@ const formatDate = (value) =>
     day: 'numeric',
   });
 
-const buildApiUrl = (path) => {
-  const base = import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '');
-  if (!base) {
-    throw new Error('Missing VITE_BACKEND_URL in frontend env.');
-  }
-  return `${base}${path}`;
-};
-
 async function fetchApi(path, init = {}) {
   const token = await auth.currentUser?.getIdToken?.();
   const headers = { ...(init.headers || {}) };
@@ -234,7 +227,7 @@ async function fetchApi(path, init = {}) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(buildApiUrl(path), {
+  const response = await fetch(buildBackendUrl(path), {
     ...init,
     credentials: 'include',
     headers,

@@ -64,6 +64,42 @@ const StateText = styled.div`
   color: ${(props) => (props.$error ? '#c83f3f' : '#777')};
 `;
 
+const PaginationControls = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #eeeeee;
+`;
+
+const PageButton = styled.button`
+  background-color: #ffffff;
+  border: 1px solid #dfdfdf;
+  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    border-color: #d1a90c;
+    color: #d1a90c;
+  }
+
+  &:disabled {
+    background-color: #f9f9f9;
+    color: #c4c4c4;
+    cursor: not-allowed;
+  }
+`;
+
+const PageInfo = styled.span`
+  font-weight: 500;
+  color: #777;
+`;
+
 const buildApiUrl = (path) => {
   const base = import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '');
   if (!base) {
@@ -126,6 +162,8 @@ const humanizeAction = (log) => {
 
 // --- MAIN PAGE RENDER ---
 
+const ITEMS_PER_PAGE = 10; // 10 per page
+
 export default function AuditLog() {
   const [category, setCategory] = useState('');
   const [datePreset, setDatePreset] = useState('');
@@ -134,6 +172,8 @@ export default function AuditLog() {
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     setRange(computeDateRange(datePreset));
@@ -170,6 +210,8 @@ export default function AuditLog() {
 
         const data = await response.json();
         setItems(data.items || []);
+        
+        setCurrentPage(1); 
       } catch (loadError) {
         setItems([]);
         setError(loadError.message || 'Failed to load audit logs');
@@ -180,6 +222,11 @@ export default function AuditLog() {
 
     load();
   }, [queryString]);
+  
+  const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
+  
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const currentItems = items.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   return (
     <PageContainer>
@@ -222,16 +269,39 @@ export default function AuditLog() {
           <StateText>No audit log entries match your filters.</StateText>
         ) : null}
 
-        {!isLoading && !error
-          ? items.map((log) => (
+        {!isLoading && !error && items.length > 0 ? (
+          <>
+            {currentItems.map((log) => (
               <AuditLogEntry
                 key={log.id}
                 user={log.actorEmail || log.actorUid || 'System'}
                 action={humanizeAction(log)}
                 timestamp={formatTimestamp(log.createdAt)}
               />
-            ))
-          : null}
+            ))}
+            {totalPages > 1 && (
+              <PaginationControls>
+                <PageButton
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                >
+                  Previous
+                </PageButton>
+                
+                <PageInfo>
+                  Page {currentPage} of {totalPages}
+                </PageInfo>
+                
+                <PageButton
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                >
+                  Next
+                </PageButton>
+              </PaginationControls>
+            )}
+          </>
+        ) : null}
       </LogContainer>
     </PageContainer>
   );

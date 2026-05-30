@@ -220,11 +220,44 @@ const ToastBody = styled.p`
 
 // --- MAIN COMPONENT RENDER ---
 
+const canonicalizeCategory = (value) => {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return '';
+  }
+
+  const normalized = trimmed.toLowerCase().replace(/&/g, 'and');
+
+  if (normalized.includes('hous')) {
+    return 'Housing';
+  }
+
+  if (normalized.includes('health') || normalized.includes('wellness')) {
+    return 'Health and Wellness';
+  }
+
+  if (normalized.includes('econ')) {
+    return 'Economic Development';
+  }
+
+  if (normalized.includes('art') || normalized.includes('cult')) {
+    return 'Art and Culture';
+  }
+
+  if (normalized.includes('educ')) {
+    return 'Education';
+  }
+
+  return trimmed;
+};
+
 export default function Home() {
   const context = useContext(UserContext);
   const isAdmin = context?.user?.role === 'admin';
   const location = useLocation();
   const navigate = useNavigate();
+  const [approvedSubmissions, setApprovedSubmissions] = useState(0);
+  const [trendingCategory, setTrendingCategory] = useState('N/A');
   const [showSubmissionToast, setShowSubmissionToast] = useState(() =>
     Boolean(location.state?.submissionSuccessToast)
   );
@@ -285,6 +318,95 @@ export default function Home() {
     []
   );
 
+  useEffect(() => {
+    const controller = new AbortController();
+    const base = import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '');
+
+    const fetchJson = async (path) => {
+      if (!base) {
+        throw new Error('Missing VITE_BACKEND_URL in frontend env.');
+      }
+
+      const response = await fetch(`${base}${path}`, {
+        credentials: 'include',
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Request failed (${response.status})`);
+      }
+
+      return response.json();
+    };
+
+    const loadPublicMetrics = async () => {
+      try {
+        const metrics = await fetchJson('/dashboard/public-metrics');
+        setApprovedSubmissions(metrics.approvedSubmissions || 0);
+        setTrendingCategory(canonicalizeCategory(metrics.trendingCategory) || 'N/A');
+      } catch (error) {
+        if (error.name === 'AbortError') {
+          return;
+        }
+
+        console.warn(
+          'Homepage metrics endpoint failed, falling back to /proposals count:',
+          error
+        );
+
+        try {
+          const proposals = await fetchJson('/proposals');
+          setApprovedSubmissions(
+            proposals.items?.filter((proposal) => proposal.status === 'approved')
+              .length || 0
+          );
+          const topCategory = (proposals.items || []).reduce(
+            (currentTop, proposal) => {
+              const category = canonicalizeCategory(proposal.category);
+              if (!category) {
+                return currentTop;
+              }
+
+              const nextCounts = {
+                ...currentTop.counts,
+                [category]: (currentTop.counts[category] || 0) + 1,
+              };
+              const nextTopName =
+                nextCounts[category] > currentTop.topCount
+                  ? category
+                  : currentTop.topName;
+              const nextTopCount = Math.max(
+                currentTop.topCount,
+                nextCounts[category]
+              );
+
+              return {
+                counts: nextCounts,
+                topName: nextTopName,
+                topCount: nextTopCount,
+              };
+            },
+            { counts: {}, topName: 'N/A', topCount: 0 }
+          );
+          setTrendingCategory(topCategory.topName);
+        } catch (fallbackError) {
+          if (fallbackError.name !== 'AbortError') {
+            console.error(
+              'Failed to load homepage submissions from both metrics and proposals endpoints:',
+              fallbackError
+            );
+          }
+        }
+      }
+    };
+
+    loadPublicMetrics();
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
   return (
     <div>
       {showSubmissionToast ? (
@@ -332,20 +454,20 @@ export default function Home() {
       {/* STATS BAR SECTION */}
       <StatsBar>
         <StatMainInfo>
-          <StatTitle>Idea Collection in Progress...</StatTitle>
+          <StatTitle>Idea collection in progress...</StatTitle>
           <StatSubtitle>Collaborating for a better Evanston.</StatSubtitle>
         </StatMainInfo>
 
         <StatsMetrics>
           <StatBlock>
-            <StatNumber>842</StatNumber>
-            <StatLabel>Submissions</StatLabel>
+            <StatNumber>{approvedSubmissions}</StatNumber>
+            <StatLabel>Total Submissions</StatLabel>
           </StatBlock>
 
           <Divider />
 
           <StatBlock>
-            <StatNumber>HOUSING</StatNumber>
+            <StatNumber>{trendingCategory}</StatNumber>
             <StatLabel>Current Trending Category</StatLabel>
           </StatBlock>
         </StatsMetrics>

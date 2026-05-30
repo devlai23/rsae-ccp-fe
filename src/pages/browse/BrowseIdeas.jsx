@@ -2,6 +2,11 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 
 import ProposalEntry from '@/common/components/cards/ProposalEntry';
 import ProposalModal from '@/common/components/modals/ProposalModal';
+import { buildBackendUrl } from '@/common/lib/apiUrl';
+import {
+  appendVoterIdToPath,
+  getBrowserVoterId,
+} from '@/common/lib/voterId';
 import { UserContext } from '@/common/contexts/UserContext';
 import { auth } from '@/firebase-config';
 import styled from 'styled-components';
@@ -124,13 +129,41 @@ const StateBox = styled.div`
   padding: 1rem;
 `;
 
-const buildApiUrl = (path) => {
-  const base = import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '');
-  if (!base) {
-    throw new Error('Missing VITE_BACKEND_URL in frontend env.');
+const PaginationControls = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #eeeeee;
+`;
+
+const PageButton = styled.button`
+  background-color: #ffffff;
+  border: 1px solid #dfdfdf;
+  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    border-color: #d1a90c;
+    color: #d1a90c;
   }
-  return `${base}${path}`;
-};
+
+  &:disabled {
+    background-color: #f9f9f9;
+    color: #c4c4c4;
+    cursor: not-allowed;
+  }
+`;
+
+const PageInfo = styled.span`
+  font-weight: 500;
+  color: #777;
+`;
 
 const formatDate = (value) =>
   new Date(value).toLocaleDateString(undefined, {
@@ -146,7 +179,7 @@ async function fetchApi(path) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(buildApiUrl(path), {
+  const response = await fetch(buildBackendUrl(appendVoterIdToPath(path)), {
     credentials: 'include',
     headers,
   });
@@ -157,6 +190,25 @@ async function fetchApi(path) {
   }
 
   return response.json();
+}
+
+async function postVote(path, token) {
+  const baseHeaders = { 'Content-Type': 'application/json' };
+  if (token) {
+    baseHeaders.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(buildBackendUrl(path), {
+        method: 'POST',
+        credentials: 'include',
+        headers: baseHeaders,
+    body: JSON.stringify({
+      voterId: getBrowserVoterId(),
+    }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  return { response, data };
 }
 
 const buildQueryString = ({ search, category, status, sort, tag }) => {
@@ -182,6 +234,8 @@ const buildQueryString = ({ search, category, status, sort, tag }) => {
   return query ? `?${query}` : '';
 };
 
+const ITEMS_PER_PAGE = 10;
+
 export default function BrowseIdeas() {
   const { user } = useContext(UserContext);
   const isAdmin = user?.role === 'admin';
@@ -202,6 +256,7 @@ export default function BrowseIdeas() {
   const [modalError, setModalError] = useState('');
   const [selectedProposal, setSelectedProposal] = useState(null);
   const [votingProposalId, setVotingProposalId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const queryString = useMemo(
     () => buildQueryString({ search, category, status, sort, tag: activeTag }),
@@ -214,6 +269,13 @@ export default function BrowseIdeas() {
     }
     return proposals.filter((proposal) => proposal.status === 'approved');
   }, [proposals, isAdmin]);
+
+  const totalPages = Math.ceil(visibleProposals.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const currentItems = visibleProposals.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE
+  );
 
   useEffect(() => {
     const loadTags = async () => {
@@ -236,6 +298,7 @@ export default function BrowseIdeas() {
         const data = await fetchApi(`/proposals${queryString}`);
         const items = data.items || [];
         setProposals(items);
+        setCurrentPage(1);
         // #region agent log
         const statusCounts = items.reduce((acc, proposalItem) => {
           const key = proposalItem.status ?? 'unknown';
@@ -308,6 +371,7 @@ export default function BrowseIdeas() {
     setStatus('all');
     setSort('newest');
     setActiveTag('all');
+    setCurrentPage(1);
   };
 
   const handleVote = async (proposalId, event) => {
@@ -319,19 +383,11 @@ export default function BrowseIdeas() {
 
     setVotingProposalId(proposalId);
     try {
-      const headers = { 'Content-Type': 'application/json' };
       const token = await auth.currentUser?.getIdToken?.();
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      const response = await fetch(buildApiUrl(`/proposals/${proposalId}/vote`), {
-        method: 'POST',
-        credentials: 'include',
-        headers,
-      });
-
-      const data = await response.json().catch(() => ({}));
+      const { response, data } = await postVote(
+        `/proposals/${proposalId}/vote`,
+        token
+      );
 
       if (response.ok) {
         const nextVotes =
@@ -364,6 +420,8 @@ export default function BrowseIdeas() {
       } else {
         alert(data.error || 'Could not record your support.');
       }
+    } catch (error) {
+      alert(error?.message || 'Could not record your support.');
     } finally {
       setVotingProposalId(null);
     }
@@ -405,11 +463,11 @@ export default function BrowseIdeas() {
             onChange={(event) => setCategory(event.target.value)}
           >
             <option value='all'>All categories</option>
-            <option value='housing'>Housing</option>
-            <option value='health'>Health & Wellness</option>
-            <option value='economic'>Economic Development</option>
-            <option value='arts'>Arts & Culture</option>
-            <option value='education'>Education</option>
+            <option value='Housing'>Housing</option>
+            <option value='Health and Wellness'>Health & Wellness</option>
+            <option value='Economic Development'>Economic Development</option>
+            <option value='Art and Culture'>Arts & Culture</option>
+            <option value='Education'>Education</option>
           </Dropdown>
 
           <SectionLabel>Sort by</SectionLabel>
@@ -466,12 +524,12 @@ export default function BrowseIdeas() {
           {isLoading ? <StateBox>Loading proposals...</StateBox> : null}
           {!isLoading && error ? <StateBox $error>{error}</StateBox> : null}
 
-          {!isLoading && !error && proposals.length === 0 ? (
+          {!isLoading && !error && visibleProposals.length === 0 ? (
             <StateBox>No proposals match your current filters.</StateBox>
           ) : null}
 
           {!isLoading && !error
-            ? visibleProposals.map((proposal) => (
+            ? currentItems.map((proposal) => (
                 <ProposalEntry
                   key={proposal.id}
                   title={proposal.title}
@@ -487,6 +545,32 @@ export default function BrowseIdeas() {
                 />
               ))
             : null}
+
+          {!isLoading && !error && totalPages > 1 ? (
+            <PaginationControls>
+              <PageButton
+                type='button'
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              >
+                Previous
+              </PageButton>
+
+              <PageInfo>
+                Page {currentPage} of {totalPages}
+              </PageInfo>
+
+              <PageButton
+                type='button'
+                disabled={currentPage >= totalPages}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+              >
+                Next
+              </PageButton>
+            </PaginationControls>
+          ) : null}
         </FeedArea>
       </LayoutGrid>
 

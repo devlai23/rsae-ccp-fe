@@ -338,11 +338,11 @@ export default function SubmissionForm() {
             <option value='' disabled>
               Choose a category...
             </option>
-            <option value='housing'>Housing</option>
-            <option value='health'>Health & Wellness</option>
-            <option value='economic'>Economic Development</option>
-            <option value='arts'>Arts & Culture</option>
-            <option value='education'>Education</option>
+            <option value='Housing'>Housing</option>
+            <option value='Health and Wellness'>Health & Wellness</option>
+            <option value='Economic Development'>Economic Development</option>
+            <option value='Art and Culture'>Arts & Culture</option>
+            <option value='Education'>Education</option>
           </StyledSelect>
           {errors.category && <p>{errors.category}</p>}
         </FormGroup>

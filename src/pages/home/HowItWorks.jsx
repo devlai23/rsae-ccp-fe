@@ -77,12 +77,12 @@ export default function HowItWorks() {
     {
       num: '01',
       title: 'Submit',
-      text: 'Share your idea for the neighbourhood through a basic form',
+      text: 'Share your idea through a basic form.',
     },
     {
       num: '02',
       title: 'Review',
-      text: 'RSAE admin reviews submissions against community guidelines before they go live for voting.',
+      text: 'Admins will review submissions before they go live.',
     },
     {
       num: '03',
@@ -92,7 +92,7 @@ export default function HowItWorks() {
     {
       num: '04',
       title: 'Update',
-      text: 'View live, transparent voting results for approved ideas.',
+      text: 'View live, transparent voting results and leave constructive comments.',
     },
   ];
 
