@@ -199,9 +199,9 @@ async function postVote(path, token) {
   }
 
   const response = await fetch(buildBackendUrl(path), {
-        method: 'POST',
-        credentials: 'include',
-        headers: baseHeaders,
+    method: 'POST',
+    credentials: 'include',
+    headers: baseHeaders,
     body: JSON.stringify({
       voterId: getBrowserVoterId(),
     }),
@@ -211,14 +211,55 @@ async function postVote(path, token) {
   return { response, data };
 }
 
-const buildQueryString = ({ search, category, status, sort, tag }) => {
+const normalizeCategory = (value) => {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return '';
+  }
+
+  const normalized = trimmed.toLowerCase().replace(/&/g, 'and');
+
+  if (normalized.includes('hous')) {
+    return 'Housing';
+  }
+
+  if (normalized.includes('health') || normalized.includes('wellness')) {
+    return 'Health and Wellness';
+  }
+
+  if (normalized.includes('econ')) {
+    return 'Economic Development';
+  }
+
+  if (normalized.includes('art') || normalized.includes('cult')) {
+    return 'Art and Culture';
+  }
+
+  if (normalized.includes('educ')) {
+    return 'Education';
+  }
+
+  return trimmed;
+};
+
+const matchesSelectedCategory = (proposal, selectedCategory) => {
+  if (selectedCategory === 'all') {
+    return true;
+  }
+
+  const canonicalCategory = normalizeCategory(selectedCategory);
+  const candidateValues = [proposal.category, ...(proposal.tags || [])];
+
+  return candidateValues.some(
+    (value) => normalizeCategory(value) === canonicalCategory
+  );
+};
+
+const buildQueryString = ({ search, status, sort, tag }) => {
   const params = new URLSearchParams();
 
   if (search.trim()) {
     params.set('search', search.trim());
-  }
-  if (category !== 'all') {
-    params.set('category', category);
   }
   if (status !== 'all') {
     params.set('status', status);
@@ -259,16 +300,22 @@ export default function BrowseIdeas() {
   const [currentPage, setCurrentPage] = useState(1);
 
   const queryString = useMemo(
-    () => buildQueryString({ search, category, status, sort, tag: activeTag }),
-    [search, category, status, sort, activeTag]
+    () => buildQueryString({ search, status, sort, tag: activeTag }),
+    [search, status, sort, activeTag]
   );
 
   const visibleProposals = useMemo(() => {
-    if (isAdmin) {
-      return proposals;
-    }
-    return proposals.filter((proposal) => proposal.status === 'approved');
-  }, [proposals, isAdmin]);
+    const statusVisible = isAdmin
+      ? proposals
+      : proposals.filter((proposal) => proposal.status === 'approved');
+
+    return statusVisible
+      .filter((proposal) => matchesSelectedCategory(proposal, category))
+      .map((proposal) => ({
+        ...proposal,
+        category: normalizeCategory(proposal.category) || proposal.category,
+      }));
+  }, [proposals, isAdmin, category]);
 
   const totalPages = Math.ceil(visibleProposals.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
