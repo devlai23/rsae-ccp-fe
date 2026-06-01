@@ -255,12 +255,9 @@ const matchesSelectedCategory = (proposal, selectedCategory) => {
   );
 };
 
-const buildQueryString = ({ search, status, sort, tag }) => {
+const buildQueryString = ({ status, sort, tag }) => {
   const params = new URLSearchParams();
 
-  if (search.trim()) {
-    params.set('search', search.trim());
-  }
   if (status !== 'all') {
     params.set('status', status);
   }
@@ -300,22 +297,39 @@ export default function BrowseIdeas() {
   const [currentPage, setCurrentPage] = useState(1);
 
   const queryString = useMemo(
-    () => buildQueryString({ search, status, sort, tag: activeTag }),
-    [search, status, sort, activeTag]
+    () => buildQueryString({ status, sort, tag: activeTag }),
+    [status, sort, activeTag]
   );
 
   const visibleProposals = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
     const statusVisible = isAdmin
       ? proposals
       : proposals.filter((proposal) => proposal.status === 'approved');
 
     return statusVisible
       .filter((proposal) => matchesSelectedCategory(proposal, category))
+      .filter((proposal) => {
+        if (!normalizedSearch) {
+          return true;
+        }
+
+        const haystack = [
+          proposal.title,
+          proposal.description,
+          proposal.submittedBy,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+
+        return haystack.includes(normalizedSearch);
+      })
       .map((proposal) => ({
         ...proposal,
         category: normalizeCategory(proposal.category) || proposal.category,
       }));
-  }, [proposals, isAdmin, category]);
+  }, [proposals, isAdmin, category, search]);
 
   const totalPages = Math.ceil(visibleProposals.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -411,6 +425,10 @@ export default function BrowseIdeas() {
 
     loadProposals();
   }, [queryString]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, category, status, sort, activeTag]);
 
   const resetFilters = () => {
     setSearch('');

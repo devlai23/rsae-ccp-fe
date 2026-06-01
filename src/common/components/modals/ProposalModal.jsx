@@ -82,22 +82,6 @@ const Text = styled.p`
   color: #2e2e2e;
 `;
 
-const TagsWrap = styled.div`
-  margin-top: 0.6rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-`;
-
-const TagChip = styled.span`
-  border: 1px solid #d9d9d9;
-  border-radius: 999px;
-  background: #fff;
-  padding: 0.2rem 0.6rem;
-  font-size: 0.78rem;
-  color: #555;
-`;
-
 const StateText = styled.div`
   margin-top: 1rem;
   border: 1px dashed #d5d5d5;
@@ -411,19 +395,6 @@ export default function ProposalModal({
             <DetailBox>
               <SectionTitle>Description</SectionTitle>
               <Text>{proposalData.description}</Text>
-            </DetailBox>
-
-            <DetailBox>
-              <SectionTitle>Tags</SectionTitle>
-              {proposalData.tags?.length ? (
-                <TagsWrap>
-                  {proposalData.tags.map((tag) => (
-                    <TagChip key={tag}>{tag}</TagChip>
-                  ))}
-                </TagsWrap>
-              ) : (
-                <Text>No tags provided.</Text>
-              )}
             </DetailBox>
 
             <CommentsTitle>Comments</CommentsTitle>

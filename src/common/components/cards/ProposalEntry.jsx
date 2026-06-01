@@ -47,8 +47,9 @@ const Title = styled.h3`
 
 const CategoryBadge = styled.span`
   border-radius: 6px;
-  background-color: rgba(255, 185, 185, 0.5);
-  color: #bd3c3c;
+  border: 1px solid ${(props) => props.$borderColor || '#d5d5d5'};
+  background-color: ${(props) => props.$backgroundColor || '#f4f4f4'};
+  color: ${(props) => props.$textColor || '#3d3d3d'};
   padding: 0.24rem 0.58rem;
   font-size: 0.75rem;
   font-weight: 600;
@@ -106,6 +107,56 @@ const VoteBlock = styled.div`
   justify-content: flex-end;
 `;
 
+const getCategoryBadgeColors = (category) => {
+  const normalized = category?.trim().toLowerCase().replace(/&/g, 'and') || '';
+
+  if (normalized.includes('hous')) {
+    return {
+      backgroundColor: '#E8F1FB',
+      borderColor: '#8FB7E3',
+      textColor: '#1F5F99',
+    };
+  }
+
+  if (normalized.includes('health') || normalized.includes('wellness')) {
+    return {
+      backgroundColor: '#E7F5EC',
+      borderColor: '#8AC9A3',
+      textColor: '#226A42',
+    };
+  }
+
+  if (normalized.includes('econ')) {
+    return {
+      backgroundColor: '#FFF0E3',
+      borderColor: '#E7B07A',
+      textColor: '#A45508',
+    };
+  }
+
+  if (normalized.includes('art') || normalized.includes('cult')) {
+    return {
+      backgroundColor: '#F6EAF4',
+      borderColor: '#D7A9CF',
+      textColor: '#8A467B',
+    };
+  }
+
+  if (normalized.includes('educ')) {
+    return {
+      backgroundColor: '#E7F4F2',
+      borderColor: '#86C3BB',
+      textColor: '#17685F',
+    };
+  }
+
+  return {
+    backgroundColor: '#F3F3F3',
+    borderColor: '#D4D4D4',
+    textColor: '#4A4A4A',
+  };
+};
+
 export default function ProposalEntry({
   title,
   category,
@@ -118,6 +169,8 @@ export default function ProposalEntry({
   voteAllowed = true,
   isVoting = false,
 }) {
+  const badgeColors = getCategoryBadgeColors(category);
+
   return (
     <CardContainer>
       <CategoryAccentBar />
@@ -125,7 +178,13 @@ export default function ProposalEntry({
         <HeaderRow>
           <TitleGroup>
             <Title>{title}</Title>
-            <CategoryBadge>{category}</CategoryBadge>
+            <CategoryBadge
+              $backgroundColor={badgeColors.backgroundColor}
+              $borderColor={badgeColors.borderColor}
+              $textColor={badgeColors.textColor}
+            >
+              {category}
+            </CategoryBadge>
           </TitleGroup>
           <VoteBlock>
             {voteAllowed && onVote ? (
