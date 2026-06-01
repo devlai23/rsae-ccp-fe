@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import GoogleButton from '@/common/components/atoms/GoogleButton';
 import { useUser } from '@/common/contexts/UserContext';
+import toast from 'react-hot-toast';
 import styled from 'styled-components';
 
 const PageWrapper = styled.div`
@@ -83,9 +84,18 @@ const CardBottomRule = styled.div`
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { googleAuth } = useUser();
+
+  useEffect(() => {
+    if (location.state?.error) {
+      setError(location.state.error);
+      toast.error(location.state.error);
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.pathname, location.state, navigate]);
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
@@ -94,7 +104,9 @@ export default function Login() {
       await googleAuth();
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      setError(err.message || 'Google sign-in failed. Please try again.');
+      const message = err.message || 'Google sign-in failed. Please try again.';
+      setError(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

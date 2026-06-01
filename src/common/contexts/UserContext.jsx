@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 
 import { auth, googleProvider } from '@/firebase-config';
 import {
+  deleteUser,
+  getAdditionalUserInfo,
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
@@ -13,6 +15,7 @@ import PropTypes from 'prop-types';
 export const UserContext = React.createContext({
   user: null,
   isLoading: false,
+  isAuthorizing: false,
   logout: () => {},
   login: () => {},
   googleAuth: () => {},
@@ -26,9 +29,15 @@ UserProvider.propTypes = {
 const buildUrl = (endpoint) =>
   `${import.meta.env.VITE_BACKEND_URL.replace(/\/$/, '')}${endpoint}`;
 
+const extractBackendError = async (response, fallbackMessage) => {
+  const body = await response.json().catch(() => null);
+  return body?.error || fallbackMessage;
+};
+
 export function UserProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthorizing, setIsAuthorizing] = useState(false);
 
   useEffect(() => {
     if (!auth?.app) {
@@ -49,10 +58,10 @@ export function UserProvider({ children }) {
             const backendUserData = await response.json();
             setUser({ ...firebaseUser, ...backendUserData });
           } else {
-            setUser(firebaseUser);
+            setUser(null);
           }
         } catch {
-          setUser(firebaseUser);
+          setUser(null);
         }
       } else {
         setUser(null);
@@ -68,12 +77,30 @@ export function UserProvider({ children }) {
       throw new Error('Firebase is not configured in frontend .env');
     }
 
+    setIsAuthorizing(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const credential = await signInWithEmailAndPassword(auth, email, password);
+      const idToken = await credential.user.getIdToken();
+      const response = await fetch(buildUrl('/auth/profile'), {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+
+      if (!response.ok) {
+        await signOut(auth);
+        throw new Error(
+          await extractBackendError(
+            response,
+            'This account is not authorized to access the application.'
+          )
+        );
+      }
+
       return true;
     } catch (error) {
       console.error('Login error:', error);
       throw error;
+    } finally {
+      setIsAuthorizing(false);
     }
   };
 
@@ -100,19 +127,49 @@ export function UserProvider({ children }) {
       );
     }
 
+    setIsAuthorizing(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);
+      const info = getAdditionalUserInfo(result);
+
+      if (info?.isNewUser) {
+        try {
+          await deleteUser(result.user);
+        } catch (deleteError) {
+          console.warn('Failed to delete unauthorized new Google user:', deleteError);
+        }
+
+        await signOut(auth);
+        throw new Error(
+          'This Google account is not authorized. Ask an administrator to provision your account first.'
+        );
+      }
+
       const idToken = await result.user.getIdToken();
 
-      await fetch(buildUrl('/auth/token'), {
+      const response = await fetch(buildUrl('/auth/token'), {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken }),
       });
+
+      if (!response.ok) {
+        await signOut(auth);
+        throw new Error(
+          await extractBackendError(
+            response,
+            'This Google account is not authorized to access the application.'
+          )
+        );
+      }
     } catch (error) {
       console.error('Google auth error:', error);
-      throw new Error('Failed to complete Google authentication');
+      throw new Error(
+        error?.message || 'Failed to complete Google authentication'
+      );
+    } finally {
+      setIsAuthorizing(false);
     }
   };
 
@@ -133,6 +190,7 @@ export function UserProvider({ children }) {
   const contextValue = {
     user,
     isLoading,
+    isAuthorizing,
     login,
     logout,
     googleAuth,

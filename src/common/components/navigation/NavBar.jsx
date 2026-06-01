@@ -65,14 +65,9 @@ export default function NavBar() {
       {user ? (
         <Button.Secondary onClick={handleLogoutClick}>Log Out</Button.Secondary>
       ) : (
-        <>
-          <Button.Primary onClick={() => navigate('/signup')}>
-            Sign Up
-          </Button.Primary>
-          <Button.Secondary onClick={() => navigate('/login')}>
-            Login
-          </Button.Secondary>
-        </>
+        <Button.Secondary onClick={() => navigate('/login')}>
+          Login
+        </Button.Secondary>
       )}
       <LogoutModal
         isOpen={isModalOpen}

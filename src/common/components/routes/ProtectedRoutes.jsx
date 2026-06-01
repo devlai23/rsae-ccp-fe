@@ -3,9 +3,9 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useUser } from '@/common/contexts/UserContext';
 
 export function PrivateRoute() {
-  const { user, isLoading } = useUser();
+  const { user, isLoading, isAuthorizing } = useUser();
 
-  if (isLoading) {
+  if (isLoading || isAuthorizing) {
     return <div>Loading...</div>;
   }
 
