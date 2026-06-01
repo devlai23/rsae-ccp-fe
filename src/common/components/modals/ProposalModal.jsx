@@ -154,12 +154,30 @@ const DeleteCommentButton = styled.button`
   border: none;
   background: none;
   color: #8a8a8a;
-  font-weight: 700;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 999px;
+  padding: 0;
 
   &:hover {
+    background: rgba(203, 57, 57, 0.08);
     color: #cb3939;
   }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+`;
+
+const TrashIcon = styled.svg`
+  width: 0.95rem;
+  height: 0.95rem;
+  display: block;
 `;
 
 const CommentBody = styled.p`
@@ -251,6 +269,7 @@ export default function ProposalModal({
 }) {
   const { user } = useContext(UserContext);
   const isAdmin = user?.role === 'admin';
+  const canDeleteComments = Boolean(user);
   const proposalId = proposalData?.id ?? null;
 
   const [comments, setComments] = useState([]);
@@ -425,7 +444,7 @@ export default function ProposalModal({
                       <CommentHeaderRow>
                         <CommentHeaderLeft>
                           <span>{comment.authorDisplay || comment.author}</span>
-                          {isAdmin ? (
+                          {canDeleteComments ? (
                             <DeleteCommentButton
                               type='button'
                               onClick={() => handleDeleteComment(comment.id)}
@@ -433,7 +452,12 @@ export default function ProposalModal({
                               aria-label='Delete comment'
                               title='Delete comment'
                             >
-                              Delete
+                              <TrashIcon viewBox='0 0 24 24' aria-hidden='true'>
+                                <path
+                                  fill='currentColor'
+                                  d='M9 3h6l1 2h4v2H4V5h4zm1 6h2v8h-2zm4 0h2v8h-2zM7 9h2v8H7zm-1 12a2 2 0 0 1-2-2V8h16v11a2 2 0 0 1-2 2z'
+                                />
+                              </TrashIcon>
                             </DeleteCommentButton>
                           ) : null}
                         </CommentHeaderLeft>
